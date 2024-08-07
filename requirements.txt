@@ -1,0 +1,9 @@
+tensorflow
+gym[all]
+numpy
+pandas
+playwright
+requests
+beautifulsoup4
+celery
+mysql-connector-python
