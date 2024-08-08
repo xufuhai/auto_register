@@ -12,6 +12,7 @@ import random
 from faker import Faker
 import string
 import traceback
+import sys
 
 # 生成随机用户名
 def generate_username():
@@ -71,10 +72,40 @@ async def get_clickable_and_focusable_elements(page):
     for element in elements:
         is_visible = await element.is_visible()
         is_enabled = await element.is_enabled()
-        if is_visible and is_enabled:
+        # 判断元素是否是链接，并且target属性是否为'_blank'
+        is_link_with_target_blank = await element.evaluate(
+            "element => element.tagName === 'A' && element.target === '_blank'"
+        )
+
+        if is_visible and is_enabled and not is_link_with_target_blank:
             clickable_and_focusable_elements.append(element)
 
     return clickable_and_focusable_elements
+
+
+async def random_click_element(page, selector):
+    try:
+        # 获取元素
+        element = await page.query_selector(selector)
+        if element:
+            # 获取元素的边界框
+            bounding_box = await element.bounding_box()
+            if bounding_box:
+                # 生成随机点击位置
+                start_x = random.uniform(bounding_box['x'], bounding_box['x'] + bounding_box['width'])
+                start_y = random.uniform(bounding_box['y'], bounding_box['y'] + bounding_box['height'])
+
+                # 执行点击操作
+                await page.mouse.click(start_x, start_y)
+                print(f"random_click_element Clicked at ({start_x}, {start_y}) within bounding box: {bounding_box}")
+            else:
+                print("random_click_element Failed to get bounding box for the element.")
+        else:
+            print(f"random_click_element Element with selector '{selector}' not found on the page.")
+
+    except Exception as e:
+        print(f"random_click_element An error occurred: {e}")
+
 async def random_click(page):
     try:
         # 获取当前窗口的句柄
@@ -102,19 +133,21 @@ async def random_click(page):
                 print(f"Clicked on random point ({x}, {y}) within bounding box: {bounding_box}")
 
                 # 检查是否打开了新的标签页
-                async def switch_to_original_tab():
-                    nonlocal original_page
-                    pages = await page.context.pages()
-                    if len(pages) > 1:
-                        # 获取最后打开的标签页，并切换回原始标签页
-                        for p in pages:
-                            if p != original_page:
-                                print("Switching back to the original tab.")
-                                await original_page.bring_to_front()
-                                break
+                await page.wait_for_timeout(2000)  # 等待2秒，以确保新标签页打开
 
-                await switch_to_original_tab()
-
+                # 获取当前所有标签页
+                pages = page.context.pages
+                print('xufuhai newpage tab num:', pages, len(pages))
+                if len(pages) > 1:
+                    print('xufuhai enter new pages')
+                    # 获取最后打开的标签页，并切换回原始标签页
+                    new_tab = pages[-1]
+                    print(f"xufuhai check {new_tab} : {original_page}")
+                    if new_tab != original_page:
+                        print("Switching back to the original tab.")
+                        await original_page.bring_to_front()
+                        # 关闭新标签页
+                        await new_tab.close()
             else:
                 print("Failed to get bounding box for the element.")
         else:
@@ -135,7 +168,7 @@ async def wait_for_element_whether_exists(page, element):
     print(submit_button, element)
     if submit_button and await submit_button.is_visible():
         time.sleep(5)
-        await page.click(element)
+        await random_click_element(page, element)
         time.sleep(5)
 
 
@@ -189,11 +222,11 @@ async def random_touch_scroll_page(page):
 
 async def scroll_page(page, is_mobile: bool):
     if is_mobile:
-        await random_touch_scroll_page(page)
+        await random_scroll_page(page)
     else:
         await random_scroll_page(page)
 
-async def run(playwright: Playwright, email, username, password, url):
+async def run(playwright: Playwright, email, username, password, url, ostype):
   #browser_id = createBrowser()
   try:
     # /browser/open 接口会返回 selenium使用的http地址，以及webdriver的path，直接使用即可
@@ -222,61 +255,85 @@ async def run(playwright: Playwright, email, username, password, url):
     #print('activate_link:', link)
     #await page.goto(link, timeout=100000)
 
-    await page.goto(url, timeout=100000)
+    await page.goto(url, timeout=150000)
 
-    random_pause()
+    await random_pause()
     await page.wait_for_selector('button#answer2', state='visible')
     # 在原页面点击链接，触发新标签页打开
-    await page.click("button#answer2")
+    await random_click_element(page,"button#answer2")
     #await wait_for_element_whether_exists(page, "button#answer2")
 
-    random_pause()
-    await page.wait_for_selector('button#onesignal-slidedown-cancel-button', state='visible')
-    await page.click('button#onesignal-slidedown-cancel-button')
-    random_pause()
-    await page.wait_for_selector('#cta', timeout=100000)
+    await random_pause()
+    try:
+        await page.wait_for_selector('button#onesignal-slidedown-cancel-button', state='visible')
+        await random_click_element(page, 'button#onesignal-slidedown-cancel-button')
+    except Exception:
+        print("Button not found or not visible. Skipping click.")
+
+    await random_pause()
+    await page.wait_for_selector('#cta', timeout=150000)
     # 在原页面点击链接，触发新标签页打开
-    await page.click("#cta")
+    await random_click_element(page, "#cta")
     #await wait_for_element_whether_exists(page, "#cta")
 
-    random_pause()
+    await random_pause()
     # 等待并点击 "NEXT" 按钮
-    await page.wait_for_selector('button[type="submit"]', timeout=100000)
+    await page.wait_for_selector('button[type="submit"]', timeout=150000)
     # 等待并填充电子邮件输入字段
-    await page.wait_for_selector('input[type="email"]', timeout=100000)
+    await page.wait_for_selector('input[type="email"]', timeout=150000)
     await page.fill('input[type="email"]', email)
-    random_pause()
-    await page.wait_for_selector('input[type="text"]', timeout=100000)
+    await random_pause()
+    await page.wait_for_selector('input[type="text"]', timeout=150000)
     await page.fill('input[type="text"]', username)
-    random_pause()
-    await page.wait_for_selector('input[type="password"]', timeout=100000)
+    await random_pause()
+    await page.wait_for_selector('input[type="password"]', timeout=150000)
     await page.fill('input[type="password"]', password)
-    random_pause()
-    await page.click('button[type="submit"]')
+    await random_pause()
+    await random_click_element(page, 'button[type="submit"]')
+    await random_pause()
+    await random_click_element(page, 'button[type="submit"]')
+    await random_pause()
+    await random_click_element(page, 'button[type="submit"]')
+    time.sleep(15)
+    await random_click_element(page, 'button[type="submit"]')
     try:
         #await wait_for_element_whether_exists(page, 'button[type="submit"]')
         # 等待并点击按钮
-        await page.wait_for_selector('button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]', timeout=100000)
-        await page.click('button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
+        await page.wait_for_selector('button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]', timeout=150000)
+        await random_click_element(page, 'button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
 
         #await wait_for_element_whether_exists(page, 'button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
 
-        await page.wait_for_selector('[data-ta-locator="AlreadyMemberLogin-Link"]', timeout=100000)
+        await page.wait_for_selector('[data-ta-locator="AlreadyMemberLogin-Link"]', timeout=150000)
         print('ready to check activation_link')
         time.sleep(30)
         if 'gmail' not in email:
             email_passwd = get_email_passwd_with_email(email)
             activate_link = check_email_for_activation_link(email, email_passwd)
-            await page.goto(activate_link[0], timeout=100000)
+            await page.goto(activate_link[0], timeout=150000)
         else:
-            email_passwd = get_email_passwd_with_email(email)
-            email_recoveryemail = get_email_passwd_with_recoveryemail(email)
-            activate_link = await check_gmail_for_activation_link(email, email_passwd, email_recoveryemail, page)
-            await page.goto(activate_link, timeout=100000)
+            #email_passwd = get_email_passwd_with_email(email)
+            #email_recoveryemail = get_email_passwd_with_recoveryemail(email)
+            #activate_link = await check_gmail_for_activation_link(email, email_passwd, email_recoveryemail, page)
+            #await page.goto(activate_link, timeout=150000)
+            closeBrowser(browser_id)
+            return 1
+
+        try:
+            # 等待按钮出现，设置超时为 10 秒
+            button_selector = 'button[data-ta-locator="AffiliateAgeGateEnterButton"]'
+            await page.wait_for_selector(button_selector, state='visible', timeout=10000)
+
+            # 如果按钮出现，点击它
+            await random_click_element(page, button_selector)
+            print("AffiliateAgeGateEnterButton Button clicked.")
+        except Exception:
+            # 超时处理
+            print("AffiliateAgeGateEnterButton Button did not appear within the timeout period.")
 
         # 等待并点击 data-ta-locator="CustomLink-FlatButton-startBrowsing-link" 的按钮
-        await page.wait_for_selector('[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]', timeout=100000)
-        await page.click('[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]')
+        await page.wait_for_selector('[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]', timeout=150000)
+        await random_click_element(page, '[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]')
 
         #await wait_for_element_whether_exists(page, '[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]')
 
@@ -287,13 +344,16 @@ async def run(playwright: Playwright, email, username, password, url):
             await random_pause()
             await random_click(page)
             await random_pause()
-            await scroll_page(page, True)
+            if ostype == 'PC':
+                await scroll_page(page, False)
+            else:
+                await scroll_page(page, True)
             await random_pause()
             await random_click(page)
             await random_pause()
             await random_click(page)
             await random_pause()
-            if random.random() < 0.2:
+            if random.random() < 0.4:
                 print("Going back and pausing...")
                 await page.go_back()
                 await random_pause()
@@ -301,7 +361,10 @@ async def run(playwright: Playwright, email, username, password, url):
                 print("Skipping the go_back and pause actions.")
             #await page.go_back()
             #await random_pause()
-            await scroll_page(page, False)
+            if ostype == 'PC':
+                await scroll_page(page, False)
+            else:
+                await scroll_page(page, True)
 
         handle_captcha(page)
 
@@ -323,15 +386,15 @@ async def run(playwright: Playwright, email, username, password, url):
     deleteBrowser(browser_id)
     return 0
 
-async def bit_launch(email, username, password, url):
+async def bit_launch(email, username, password, url, ostype):
     async with async_playwright() as playwright:
-      result = await run(playwright, email, username, password, url)
+      result = await run(playwright, email, username, password, url, ostype)
       return result
 
 @app.task
-def register_user_task(url, email, password, proxy_ip, user_agent, country, city, username):
+def register_user_task(url, email, password, proxy_ip, user_agent, country, city, username, ostype):
     print('xufuhai')
-    result = asyncio.run(bit_launch(email, username, password, url))
+    result = asyncio.run(bit_launch(email, username, password, url, ostype))
     if result == 1:
         insert_registration_task(url, email, password, proxy_ip, user_agent, country, city, 'jerkmate')
     
@@ -350,10 +413,13 @@ def handle_captcha(page):
     pass
 
 
-browser_id, ip, country, city, postal = createBrowser()
+browser_id, ip, country, city, postal, ostype = createBrowser()
 detailes = detailBrowser(browser_id)
-url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
+#url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
 #url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
+url=sys.argv[1]
+print(url)
+#url='https://sweetydating.online/im/click.php?c=17&key=8ql18onn77ez91a7128cz2ga'
 email=get_random_email_with_status_zero()
 passwd=generate_password()
 #ip=detailes['data']['lastIp']
@@ -362,4 +428,4 @@ user_agent=detailes['data']['browserFingerPrint']['userAgent']
 #city=''
 username=generate_username()
 print(email, user_agent, passwd, ip, country, city, postal, username)
-register_user_task(url, email, passwd, ip, user_agent, country, city, username)
+register_user_task(url, email, passwd, ip, user_agent, country, city, username, ostype)

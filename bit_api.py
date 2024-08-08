@@ -51,7 +51,8 @@ def generate_random_string(length):
 
 def createBrowser():  # 创建或者更新窗口，指纹参数 browserFingerPrint 如没有特定需求，只需要指定下内核即可，如果需要更详细的参数，请参考文档
     # 随机选择代理国家代码
-    country_codes = ['au', 'ca', 'us', 'gb']
+    #country_codes = ['au', 'ca', 'us', 'gb']
+    country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'ch', 'bm', 'cl']
     selected_country_code = random.choice(country_codes)
 
     # 生成随机字符串
@@ -211,7 +212,7 @@ def createBrowser():  # 创建或者更新窗口，指纹参数 browserFingerPri
     browserId = res['data']['id']
     print(browserId)
     print(res)
-    return browserId, ip, country, city, postal
+    return browserId, ip, country, city, postal, ostype
 
 
 def updateBrowser():  # 更新窗口，支持批量更新和按需更新，ids 传入数组，单独更新只传一个id即可，只传入需要修改的字段即可，比如修改备注，具体字段请参考文档，browserFingerPrint指纹对象不修改，则无需传入
