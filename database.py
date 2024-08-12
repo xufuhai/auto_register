@@ -144,3 +144,32 @@ def get_email_passwd_with_recoveryemail(email):
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+def get_stayinfo_from_registration_tasks(offer):
+    conn = get_db_connection()
+    if conn is None:
+        print("Failed to connect to the database.")
+        return None
+
+    try:
+        cursor = conn.cursor()
+        query = "SELECT email, password, user_agent, country FROM registration_tasks WHERE offer = %s"
+        cursor.execute(query, (offer,))
+        stayinfo = cursor.fetchall()
+
+        if not stayinfo:
+            print("No emails with status 0 found.")
+            return None
+        choose = random.choice(stayinfo)
+        print(choose)
+        return choose
+
+    except Error as e:
+        print(f"Error: {e}")
+        return None
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()

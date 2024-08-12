@@ -49,11 +49,14 @@ def generate_random_string(length):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
-def createBrowser():  # 创建或者更新窗口，指纹参数 browserFingerPrint 如没有特定需求，只需要指定下内核即可，如果需要更详细的参数，请参考文档
+def createBrowser(stay, country_in):  # 创建或者更新窗口，指纹参数 browserFingerPrint 如没有特定需求，只需要指定下内核即可，如果需要更详细的参数，请参考文档
     # 随机选择代理国家代码
     #country_codes = ['au', 'ca', 'us', 'gb']
-    country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'ch', 'bm', 'cl']
-    selected_country_code = random.choice(country_codes)
+    if not stay:
+        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'ch', 'bm', 'cl']
+        selected_country_code = random.choice(country_codes)
+    else:
+        selected_country_code = country_in
 
     # 生成随机字符串
     random_string = generate_random_string(8)  # 生成8位随机字符串，与nnD2H1bq长度相同
