@@ -133,7 +133,8 @@ def random_user_agent():
 
 # 随机化 SOCKS5 代理的字段
 country_code = random_country_code()
-proxy_url = f"socks5h://qKJE32NQAh8KjaON:XyPPDxNlMmvxMOGN_country-{country_code}_session-{random_string}_lifetime-24h_streaming-1@geo.iproyal.com:42325"
+#proxy_url = f"socks5h://qKJE32NQAh8KjaON:XyPPDxNlMmvxMOGN_country-{country_code}_session-{random_string}_lifetime-24h_streaming-1@geo.iproyal.com:42325"
+proxy_url = f"socks5h://proxy-ethanxu_area-{country_code}_session-{random_string}_life-5:xufuhai111@us.naproxy.net:1000"
 # 请求的 URL
 url = 'https://specdeviceinfo.com/im/click.php?c=5&key=2teof463dta75hnlt292iamf'
 

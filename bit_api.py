@@ -97,15 +97,20 @@ def createBrowser():  # 创建或者更新窗口，指纹参数 browserFingerPri
         "proxyMethod": 2,  # 代理类型 2自定义;3提取IP
         # 自定义代理类型 ['noproxy', 'http', 'https', 'socks5']
         "proxyType": 'socks5',
-        "host": 'geo.iproyal.com',  # 代理主机
-        "port": '32325',  # 代理端口
-        "proxyUserName": 'qKJE32NQAh8KjaON',  # 代理账号
-        "proxyPassword": f'XyPPDxNlMmvxMOGN_country-{selected_country_code}_session-{random_string}_lifetime-24h_streaming-1',  # 代理密码
+        #"host": 'geo.iproyal.com',  # 代理主机
+        #"port": '32325',  # 代理端口
+        #"proxyUserName": 'qKJE32NQAh8KjaON',  # 代理账号
+        #"proxyPassword": f'XyPPDxNlMmvxMOGN_country-{selected_country_code}_session-{random_string}_lifetime-24h_streaming-1',  # 代理密码
+        "host": 'us.naproxy.net',  # 代理主机
+        "port": '1000',  # 代理端口
+        "proxyUserName": f'proxy-ethanxu_area-{selected_country_code}_session-{random_string}_life-120',  # 代理账号
+        "proxyPassword": 'xufuhai111', # 代理密码
         'dynamicIpUrl': '',  # proxyMethod = 3时，提取IP链接
         'dynamicIpChannel': '',  # 提取链接服务商，rola | doveip | cloudam | common
         'isDynamicIpChangeIp': False,  # 每次打开都提取新IP，默认false
         # ip检测服务IP库，默认ip-api，选项 ip-api | ip123in | luminati，luminati为Luminati专用
         'ipCheckService': 'ip-api',
+        'isIpv6': False,
         'abortImage': False,  # 是否禁止图片加载
         'abortMedia': False,  # 是否禁止媒体加载
         'stopWhileNetError': False,  # 网络错误时是否停止
@@ -179,23 +184,27 @@ def createBrowser():  # 创建或者更新窗口，指纹参数 browserFingerPri
         }
     }
 
-    host = json_data['host']
-    proxyPassword = json_data['proxyPassword']
-    proxyUserName = json_data['proxyUserName']
+    #host = json_data['host']
+    #proxyPassword = json_data['proxyPassword']
+    #proxyUserName = json_data['proxyUserName']
+    #port = json_data['port']
     # 代理服务器的地址和认证信息
-    proxy = f'socks5h://{proxyUserName}:{proxyPassword}@{host}:42325'
+    #proxy = f'socks5h://{proxyUserName}:{proxyPassword}@{host}:{port}'
+    proxy = f'http://165.154.20.60:5000/get_ip_info?location={selected_country_code}&session={random_string}'
+
 
     # 目标 URL
-    url_ipinfo = "https://ipinfo.io"
+    #url_ipinfo = "https://ipinfo.io"
 
     # 配置代理
-    proxies = {
-        "http": proxy,
-        "https": proxy
-    }
+    #proxies = {
+    #    "http": proxy,
+    #    "https": proxy
+    #}
 
     # 发起请求
-    response = requests.get(url_ipinfo, proxies=proxies)
+    #response = requests.get(url_ipinfo, proxies=proxies)
+    response = requests.get(proxy)
     global ip
     global country
     global city
