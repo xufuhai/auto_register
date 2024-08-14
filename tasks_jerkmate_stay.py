@@ -310,7 +310,7 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
         time.sleep(25)
 
         # 随机点击、随机暂停、返回、滚动
-        for _ in range(20):  # 进行10次操作，你可以根据需要调整次数
+        for _ in range(10):  # 进行10次操作，你可以根据需要调整次数
             await random_click(page)
             await random_pause()
             await random_click(page)

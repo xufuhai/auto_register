@@ -298,18 +298,25 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
     await random_click_element(page, 'button[type="submit"]')
     try:
         #await wait_for_element_whether_exists(page, 'button[type="submit"]')
-        # 等待并点击按钮
-        await page.wait_for_selector('button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]', timeout=150000)
-        await random_click_element(page, 'button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
-
-        #await wait_for_element_whether_exists(page, 'button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
-
-        await page.wait_for_selector('[data-ta-locator="AlreadyMemberLogin-Link"]', timeout=150000)
+        try:
+            # 等待并点击按钮
+            await page.wait_for_selector('button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]', timeout=150000)
+            await random_click_element(page, 'button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
+            #await wait_for_element_whether_exists(page, 'button[data-ta-locator="FreemiumSignup-OptionalUpgradeButton"]')
+            await page.wait_for_selector('[data-ta-locator="AlreadyMemberLogin-Link"]', timeout=150000)
+        except Exception:
+            # 超时处理
+            print("OptionalUpgradeButton or AlreadyMemberLogin Button did not appear within the timeout period.")
         print('ready to check activation_link')
         time.sleep(30)
         if 'gmail' not in email:
             email_passwd = get_email_passwd_with_email(email)
             activate_link = check_email_for_activation_link(email, email_passwd)
+            if activate_link == 'nothing':
+                closeBrowser(browser_id)
+                deleteBrowser(browser_id)
+                return 0
+            await random_pause()
             await page.goto(activate_link[0], timeout=150000)
         else:
             #email_passwd = get_email_passwd_with_email(email)

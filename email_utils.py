@@ -83,8 +83,8 @@ def check_email_for_activation_link(email_user, email_password):
         num_messages = len(pop3.list()[1])
 
         if num_messages == 0:
-            print("没有邮件。")
-            return []
+            print("has no email")
+            return 'nothing'
 
         # 遍历邮件并提取内容和链接
         for i in range(num_messages):
