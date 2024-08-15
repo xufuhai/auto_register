@@ -79,12 +79,20 @@ def createBrowser(stay, country_in):  # 创建或者更新窗口，指纹参数 
     #}
     resolution = random.choice(['1024 x 768', '1280 x 800', '1280 x 960', '1920 x 1080', '1440 x 900', '1280 x 1024'])
     os = weighted_random_choice(os_options)
+
     if os == 'Linux armv81':
         ostype = 'Android'
+        hardwareConcurrency = random.choice([6, 8, 10, 12])
+        deviceMemory = random.choice([6, 8, 12])
     elif os == 'iPhone':
         ostype = 'IOS'
+        hardwareConcurrency = random.choice([4, 6, 8])
+        deviceMemory = random.choice([4, 6, 8])
     else:
         ostype = 'PC'
+        hardwareConcurrency = random.choice([4, 6, 8, 12, 16, 18, 24, 32])
+        deviceMemory = random.choice([2, 4, 6, 8, 12, 16, 24, 32, 64])
+
     json_data = {
         "groupId": "",  # 群组ID，绑定群组时传入，如果登录的是子账号，则必须赋值，否则会自动分配到主账户下面去
         "platform": '',  # 账号平台
@@ -165,8 +173,8 @@ def createBrowser(stay, country_in):  # 创建或者更新窗口，指纹参数 
             'mediaDeviceValue': random.randint(1, 100),  # mediaDevice 噪音值，修改时再传回到服务端
             'speechVoices': '0',  # Speech Voices，默认随机
             'speechVoicesValue': random.randint(1, 100),  # peech Voices 值，修改时再传回到服务端
-            'hardwareConcurrency': random.choice([6, 8, 10, 12]),  # 并发数
-            'deviceMemory': random.choice([6, 8, 16, 32]),  # 设备内存
+            'hardwareConcurrency': hardwareConcurrency,  # 并发数
+            'deviceMemory': deviceMemory,  # 设备内存
             'doNotTrack': '1',  # doNotTrack
             'portScanProtect': '1',  # port
             'portWhiteList': '',
