@@ -8,3 +8,5 @@ beautifulsoup4
 celery
 mysql-connector-python
 random-user-agent
+bs4
+faker
