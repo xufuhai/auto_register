@@ -69,9 +69,9 @@ def replace_chrome_version(user_agent, new_versions):
 
 def replace_android_version(user_agent, new_versions):
     # 查找 Android 版本号
-    match = re.search(r'Android (\d+)', user_agent)
+    match = re.search(r'Android (\d+\.\d+\.\d+|\d+\.\d+|\d+)', user_agent)
     if match:
-        current_version = int(match.group(1))  # 提取当前版本号
+        current_version = match.group(1)  # 提取当前版本号
 
         # 计算新的版本号
         new_version = random.choice(new_versions)
