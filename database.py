@@ -28,7 +28,11 @@ def insert_registration_task(url, email, password, proxy_ip, user_agent, country
         SET status = %s
         WHERE email = %s
     '''
-    values_update = ('1', email)
+    values_update = ('99', '')
+    if offer == 'jerkmate':
+        values_update = ('1', email)
+    elif offer == 'royalcams':
+        values_update = ('2', email)
     cursor.execute(query_update, values_update)
     conn.commit()
     print("Record updated in buy_email successfully")
@@ -60,7 +64,7 @@ def insert_buy_email(email, password, recoveryemail, type, status):
         conn.close()
 
 
-def get_random_email_with_status_zero():
+def get_random_email_with_status_zero(status):
     conn = get_db_connection()
     if conn is None:
         print("Failed to connect to the database.")

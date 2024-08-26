@@ -204,7 +204,7 @@ detailes = detailBrowser(browser_id)
 url=sys.argv[1]
 print(url)
 #url='https://sweetydating.online/im/click.php?c=17&key=8ql18onn77ez91a7128cz2ga'
-email=get_random_email_with_status_zero()
+email=get_random_email_with_status_zero('1')
 passwd=generate_password()
 #ip=detailes['data']['lastIp']
 user_agent=detailes['data']['browserFingerPrint']['userAgent']

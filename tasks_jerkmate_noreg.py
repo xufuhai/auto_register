@@ -321,7 +321,7 @@ browser_id, ip, country, city, postal, ostype = createBrowser()
 detailes = detailBrowser(browser_id)
 #url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
 url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
-email=get_random_email_with_status_zero()
+email=get_random_email_with_status_zero('1')
 passwd=generate_password()
 #ip=detailes['data']['lastIp']
 user_agent=detailes['data']['browserFingerPrint']['userAgent']

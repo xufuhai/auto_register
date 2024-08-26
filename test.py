@@ -340,7 +340,7 @@ detailes = detailBrowser(browser_id)
 # url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
 # url='https://sweetydating.online/im/click.php?c=17&key=8ql18onn77ez91a7128cz2ga'
 url = 'https://sweetydating.online/'
-email = get_random_email_with_status_zero()
+email = get_random_email_with_status_zero('1')
 passwd = generate_password()
 # ip=detailes['data']['lastIp']
 user_agent = detailes['data']['browserFingerPrint']['userAgent']
