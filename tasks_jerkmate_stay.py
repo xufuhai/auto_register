@@ -101,9 +101,11 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
         #await page.wait_for_selector('div[data-ta-locator="HeroPremiumUpgrade"] button', timeout=150000)
         #await random_click_element(page, 'div[data-ta-locator="HeroPremiumUpgrade"] button')
         time.sleep(25)
-
+        random_nums_array = [6, 8, 10, 12]
+        random_num = random.choice(random_nums_array)
+        print('action random_num:', random_num)
         # 随机点击、随机暂停、返回、滚动
-        for _ in range(10):  # 进行10次操作，你可以根据需要调整次数
+        for _ in range(random_num):  # 进行10次操作，你可以根据需要调整次数
             await random_click(page)
             await random_pause()
             await random_click(page)
