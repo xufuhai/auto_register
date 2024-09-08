@@ -3,24 +3,30 @@ import asyncio
 import time
 async def get_clickable_and_focusable_elements(page):
     # 使用可见性过滤器获取当前可见的可点击元素
+    #elements = await page.locator(
+    #    "button, [role='button'], a, [onclick], input[type='button'], input[type='submit'], button.dft_hide.popup_hide.__ph_btn.__ph_td",
+    #).all()
     elements = await page.locator(
-        "button, [role='button'], a, [onclick], input[type='button'], input[type='submit']"
-    ).all()
+        "button:not([disabled]):visible, [role='button']:not([disabled]):visible, a:not([disabled]):visible, input[type='button']:not([disabled]):visible, input[type='submit']:not([disabled]):visible"
+    ).all();
+    #await elements.wait_for(timeout=2000)
 
     clickable_and_focusable_elements = []
 
-    for element in elements:
-        is_visible = await element.is_visible()
-        is_enabled = await element.is_enabled()
-        # 判断元素是否是链接，并且target属性是否为'_blank'
-        is_link_with_target_blank = await element.evaluate(
-            "element => element.tagName === 'A' && element.target === '_blank'"
-        )
+    #for element in elements:
+    #    is_visible = await element.is_visible()
+    #    is_enabled = await element.is_enabled()
+    #    # 判断元素是否是链接，并且target属性是否为'_blank'
+    #    is_link_with_target_blank = await element.evaluate(
+    #        "element => element.tagName === 'A' && element.target === '_blank'"
+    #    )
 
-        if is_visible and is_enabled and not is_link_with_target_blank:
-            clickable_and_focusable_elements.append(element)
+        #if is_visible and is_enabled and not is_link_with_target_blank:
+    #    if is_visible and is_enabled:
+    #        clickable_and_focusable_elements.append(element)
 
-    return clickable_and_focusable_elements
+    #return clickable_and_focusable_elements
+    return elements
 
 
 async def random_click_element(page, selector):

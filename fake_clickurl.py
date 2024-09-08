@@ -5,6 +5,7 @@ from random_user_agent.user_agent import UserAgent
 from random_user_agent.params import SoftwareName, OperatingSystem
 from fake_useragent import UserAgent
 import re
+import sys
 
 # 随机生成8位字符串
 def random_string(length=8):
@@ -18,9 +19,23 @@ def generate_random_string(length):
 random_string = generate_random_string(8)  # 生成8位随机字符串，与nnD2H1bq长度相同
 
 # 随机选择国家代码
+#def random_country_code():
+#    country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'bm', 'cl']
+#    return random.choice(country_codes)
 def random_country_code():
-    country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'bm', 'cl']
-    return random.choice(country_codes)
+    if sys.argv[2] == 'jerkmate':
+        print('select 1')
+        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'ch', 'bm', 'cl']
+        selected_country_code = random.choice(country_codes)
+    elif sys.argv[2] == 'royalcams':
+        print('select 2')
+        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi', 'il', 'ru']
+        selected_country_code = random.choice(country_codes)
+    elif sys.argv[2] == 'bongacams':
+        print('select 3')
+        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi']
+        selected_country_code = random.choice(country_codes)
+    return selected_country_code
 
 # 根据国家代码选择语言
 def country_to_language(country_code):
@@ -136,7 +151,8 @@ country_code = random_country_code()
 #proxy_url = f"socks5h://qKJE32NQAh8KjaON:XyPPDxNlMmvxMOGN_country-{country_code}_session-{random_string}_lifetime-24h_streaming-1@geo.iproyal.com:42325"
 proxy_url = f"socks5h://proxy-ethanxu_area-{country_code}_session-{random_string}_life-5:xufuhai111@us.naproxy.net:1000"
 # 请求的 URL
-url = 'https://specdeviceinfo.com/im/click.php?c=5&key=2teof463dta75hnlt292iamf'
+#url = 'https://specdeviceinfo.com/im/click.php?c=5&key=2teof463dta75hnlt292iamf'
+url = sys.argv[1]
 
 # 配置 User-Agent 和其他头信息
 headers = {
@@ -151,7 +167,7 @@ headers = {
     'Sec-Fetch-Dest': 'document',
     'Sec-Fetch-Mode': 'navigate',
     'Sec-Fetch-Site': 'same-origin',
-    'Referer': 'https://specdeviceinfo.com'
+    #'Referer': 'https://specdeviceinfo.com'
 }
 
 

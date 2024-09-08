@@ -198,7 +198,7 @@ def register_user_task(url, email, password, proxy_ip, user_agent, country, city
         insert_registration_task(url, email, password, proxy_ip, user_agent, country, city, 'jerkmate')
 
 
-browser_id, ip, country, city, postal, ostype = createBrowser(False, '')
+browser_id, ip, country, city, postal, ostype = createBrowser(False, '', 'jerkmate')
 detailes = detailBrowser(browser_id)
 #url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
 #url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'

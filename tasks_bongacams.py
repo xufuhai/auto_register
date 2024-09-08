@@ -52,10 +52,9 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
     await random_pause()
     await scroll_page(page, False)
 
-    await page.wait_for_selector('a.button-gradient[href^="/out/homepage"]', state='visible')
+    await page.wait_for_selector('a[href*="bongacams.com/popular-chat"]', state='visible')
     # 在原页面点击链接，触发新标签页打开
-    await random_click_element(page,'a.button-gradient[href^="/out/homepage"]')
-    print('xufuhaixufuhai')
+    await random_click_element(page,'a[href*="bongacams.com/popular-chat"]')
     #await wait_for_element_whether_exists(page, "button#answer2")
 
     await random_pause()
@@ -63,49 +62,109 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
     await random_pause()
     await scroll_page(page, False)
     try:
-        print('xufuhaixufuhai1')
-        await page.wait_for_selector('a#btn_signup', state='visible')
-        await random_pause()
-        print('xufuhaixufuhai2')
-        await random_click_element(page, 'a#btn_signup')
-        print('xufuhaixufuhai3')
+        if ostype == 'PC':
+            print("xufuhaixufuhai")
+            await page.wait_for_selector('a.bt30.bt30_green.bc_uppercase.join_btn', state='visible')
+            print("xufuhaixufuhai1")
+            await random_pause()
+            await random_click_element(page, 'a.bt30.bt30_green.bc_uppercase.join_btn')
+            await random_pause()
+            await random_click_element(page, 'a.bt30.bt30_green.bc_uppercase.join_btn')
+            print("xufuhaixufuhai2")
+        else:
+            print("xufuhaixufuhai")
+            await page.wait_for_selector('a.join-btn.ui-btn.ui-btn-up-f.ui-shadow.ui-btn-corner-all', state='visible')
+            print("xufuhaixufuhai1")
+            await random_pause()
+            await random_click_element(page,'a.join-btn.ui-btn.ui-btn-up-f.ui-shadow.ui-btn-corner-all')
+            await random_pause()
+            await random_click_element(page,'a.join-btn.ui-btn.ui-btn-up-f.ui-shadow.ui-btn-corner-all')
+            print("xufuhaixufuhai2")
+
     except Exception:
         print("Button not found or not visible. Skipping click.")
 
 
     await random_pause()
     # 等待并点击 "NEXT" 按钮
-    await page.wait_for_selector('button[type="submit"]', timeout=150000)
+    #await page.wait_for_selector('button[type="submit"]', timeout=150000)
     # 等待并填充电子邮件输入字段
-    await page.wait_for_selector('input[id="user_member_username"]', timeout=150000)
-    await page.fill('input[id="user_member_username"]', username)
+    print("xufuhaixufuhai3")
+    await page.wait_for_selector('input#user_member_username', timeout=150000)
+    await page.fill('input#user_member_username', username)
+    #await page.wait_for_selector('input#user_member_username, input#log_in_username, input[name="log_in[username]"], input[name="user_member[username]"]', timeout=150000)
+    #await page.fill('input#user_member_username, input#log_in_username, input[name="log_in[username]"], input[name="user_member[username]"]', username)
     await random_pause()
-    await page.wait_for_selector('input[id="user_member_email"]', timeout=150000)
-    await page.fill('input[id="user_member_email"]', email.split('_needcheck')[0])
+
+    await random_click_element(page, 'button.bt30.bt30_green.next')
     await random_pause()
-    await page.wait_for_selector('input[id="user_member_password"]', timeout=150000)
-    await page.fill('input[id="user_member_password"]', password)
+
+    #await page.wait_for_selector('input[id="user_member_email"]', timeout=150000)
+    #await page.fill('input[id="user_member_email"]', email.split('_needcheck')[0])
+    #await random_pause()
+    #await page.wait_for_selector('input#user_member_password, input#log_in_password, input[name="log_in[password]"], input[name="user_member[password]"]', timeout=150000)
+    #await page.fill('input#user_member_password, input#log_in_password, input[name="log_in[password]"], input[name="user_member[password]"]', password)
+    await page.wait_for_selector('input#user_member_password', timeout=150000)
+    await page.fill('input#user_member_password', password)
     await random_pause()
     # 确保复选框元素可见
-    await page.wait_for_selector('input#user_member_terms_of_use', state='visible')
+    #await page.wait_for_selector('span.ui-icon.ui-icon-checkbox-off.ui-icon-shadow', state='visible')
 
     # 选中复选框
     #is_checked = await page.evaluate('document.querySelector("#user_member_terms_of_use").checked')
     #if not is_checked:
+
+    # 确保复选框元素可见
+    #await random_click_element(page, 'span.ui-icon.ui-icon-checkbox-off.ui-icon-shadow')
     await random_click_element(page, 'input#user_member_terms_of_use')
+
     await random_pause()
     await random_click_element(page, 'button[type="submit"]')
+    #await random_click_element(page, 'button.bt30.bt30_green.bt_green_solid')
+    await random_pause()
+    #await random_click_element(page, 'button[type="submit"]')
+    await random_click_element(page, 'button.bt30.bt30_green.bt_green_solid')
     await random_pause()
     await random_click_element(page, 'button[type="submit"]')
+    await random_click_element(page, 'button.bt30.bt30_green.bt_green_solid')
     await random_pause()
-    await random_click_element(page, 'button[type="submit"]')
+    await random_click_element(page, 'button.join_submit.bt30.bt30_green')
     time.sleep(15)
-    await random_click_element(page, 'button[type="submit"]')
+    #await random_click_element(page, 'button[type="submit"]')
+
+    await random_click(page)
+    await random_pause()
+    await page.goto('https://bongacams.com/', timeout=150000)
+    await random_pause()
+    await random_click_element(page, 'button.buytokens_tablet')
+    await random_pause()
+    await random_click(page)
+    await random_pause()
+
+
+
+    await page.wait_for_selector('input[name="email"]', timeout=150000)
+    await page.fill('input[name="email"]', email.split('_needcheck')[0])
+
     try:
         # 确保<span>元素可见
-        await page.wait_for_selector('span.ace_close', state='visible')
+        #await page.wait_for_selector('span.vpe_fit_text.js-fit_text', state='visible')
+        #await random_pause()
+        #await random_click_element(page, 'span.vpe_close')
+        #await random_pause()
+        await random_click_element(page, 'a.bc_btn.bc_btn_green.hcb_btn')
         await random_pause()
-        await random_click_element(page, 'span.ace_close')
+        await random_click_element(page, 'button.bc_btn.bc_btn_green.hcb_btn')
+        await random_pause()
+        await random_click_element(page, 'button.join_submit.bt30.bt30_green')
+        await random_pause()
+        await random_click_element(page, 'button[type="submit"]')
+        await random_pause()
+        await random_click_element(page, 'span.vpe_fit_text.js-fit_text')
+        await random_pause()
+        await random_click_element(page, 'span.vpe_close')
+        await random_pause()
+        await random_click_element(page, 'button.vpe_close')
         print('ready to check activation_link')
         time.sleep(30)
 
@@ -120,20 +179,6 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
             #activate_link = await check_gmail_for_activation_link(email, email_passwd, email_recoveryemail, page)
             #await page.goto(activate_link, timeout=150000)
             pass
-
-
-        try:
-            # 等待按钮出现，设置超时为 10 秒
-            button_selector = 'button.dft_hide.popup_hide.__ph_btn.__ph_td'
-            await page.wait_for_selector(button_selector, state='visible', timeout=10000)
-
-            # 如果按钮出现，点击它
-            await random_click_element(page, button_selector)
-            print("button.dft_hide.popup_hide.__ph_btn.__ph_td Button clicked.")
-        except Exception:
-            # 超时处理
-            print("button.dft_hide.popup_hide.__ph_btn.__ph_td Button did not appear within the timeout period.")
-
 
         #await wait_for_element_whether_exists(page, '[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]')
 
@@ -158,6 +203,8 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
             if random.random() < 0.4:
                 print("Going back and pausing...")
                 await page.go_back()
+                await random_pause()
+                await page.goto('https://bongacams.com/', timeout=150000)
                 await random_pause()
             else:
                 print("Skipping the go_back and pause actions.")
@@ -198,7 +245,7 @@ def register_user_task(url, email, password, proxy_ip, user_agent, country, city
     print('xufuhai')
     result = asyncio.run(bit_launch(email, username, password, url, ostype))
     if result == 1:
-        insert_registration_task(url, email.split('_needcheck')[0], password, proxy_ip, user_agent, country, city, 'royalcams')
+        insert_registration_task(url, email.split('_needcheck')[0], password, proxy_ip, user_agent, country, city, 'bongacams')
     
 
 def close_advertisements(page):
@@ -215,11 +262,13 @@ def handle_captcha(page):
     pass
 
 
-browser_id, ip, country, city, postal, ostype = createBrowser(False, '', 'royalcams')
+browser_id, ip, country, city, postal, ostype = createBrowser(False, '', 'bongacams')
 detailes = detailBrowser(browser_id)
 #url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
 #url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
-url='https://t.ajrkm.link/334905/2994/19129?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
+#url='https://t.ajrkm.link/335292/2934/9581?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
+#url='https://t.ajrkm.link/340061/2934/9581?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
+url='https://t.ajrkm.link/340059/2934/9581?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
 #url=sys.argv[1]
 print(url)
 username=generate_username()
@@ -227,7 +276,7 @@ username=generate_username()
 if random.random() < 0.7:
     email = generate_random_email()
 else:
-    email = get_random_email_with_status_zero('2')
+    email = get_random_email_with_status_zero('3')
     email = email + '_needcheck'
 passwd=generate_password()
 #ip=detailes['data']['lastIp']

@@ -65,12 +65,11 @@ async def check_gmail_for_activation_link(email_user, email_password, revovery_e
     activate_link = await click_email_and_extract_url(page)
     return activate_link
 
-def check_email_for_activation_link(email_user, email_password):
-    # 连接到 POP3 服务器
+# POP3 检查函数
+def check_email_pop3(email_user, email_password):
     pop3_url = 'pop.outlook.com'  # POP3 服务器地址，适用于 Outlook 和 Hotmail
     pop3 = poplib.POP3_SSL(pop3_url)
 
-    # 保存已打印的链接
     printed_links = set()
     relevant_links = []
 
@@ -83,13 +82,13 @@ def check_email_for_activation_link(email_user, email_password):
         num_messages = len(pop3.list()[1])
 
         if num_messages == 0:
-            print("has no email")
-            return 'nothing'
+            print("POP3: no email")
+            return relevant_links
 
         # 遍历邮件并提取内容和链接
         for i in range(num_messages):
             # 获取邮件
-            raw_email = b'\n'.join(pop3.retr(i+1)[1])
+            raw_email = b'\n'.join(pop3.retr(i + 1)[1])
             msg = BytesParser(policy=default).parsebytes(raw_email)
 
             # 提取邮件正文
@@ -123,6 +122,159 @@ def check_email_for_activation_link(email_user, email_password):
     finally:
         # 关闭连接
         pop3.quit()
+
+    return relevant_links
+
+# IMAP 检查函数
+def check_email_imap(email_user, email_password):
+    imap_url = 'imap-mail.outlook.com'  # IMAP 服务器地址，适用于 Outlook 和 Hotmail
+    mail = imaplib.IMAP4_SSL(imap_url)
+
+    printed_links = set()
+    relevant_links = []
+
+    try:
+        # 登录邮箱
+        mail.login(email_user, email_password)
+
+        # 遍历收件箱和垃圾邮箱
+        folders_to_check = ['INBOX', 'Junk']  # 'Junk' 可能是垃圾邮件的文件夹名称，视服务商而定
+
+        for folder in folders_to_check:
+            mail.select(folder)
+
+            # 搜索所有邮件
+            result, data = mail.search(None, 'ALL')
+            if result != 'OK':
+                print(f"Failed to retrieve emails from {folder}")
+                continue
+
+            # 获取邮件列表
+            email_ids = data[0].split()
+
+            if not email_ids:
+                print(f"No emails found in {folder}")
+                continue
+
+            # 遍历邮件
+            for email_id in email_ids:
+                result, message_data = mail.fetch(email_id, '(RFC822)')
+                if result != 'OK':
+                    print(f"Failed to fetch email with ID {email_id}")
+                    continue
+
+                raw_email = message_data[0][1]
+                msg = BytesParser(policy=default).parsebytes(raw_email)
+
+                # 检查是否为 multipart 邮件
+                if msg.is_multipart():
+                    for part in msg.iter_parts():
+                        content_type = part.get_content_type()
+                        if content_type == 'text/html':
+                            html_content = part.get_payload(decode=True).decode()
+                            soup = BeautifulSoup(html_content, 'html.parser')
+                            links = soup.find_all('a')
+                            for link in links:
+                                href = link.get('href')
+                                if href and is_relevant_link(href) and href not in printed_links:
+                                    relevant_links.append(href)
+                                    printed_links.add(href)
+                else:
+                    content_type = msg.get_content_type()
+                    if content_type == 'text/html':
+                        html_content = msg.get_payload(decode=True).decode()
+                        soup = BeautifulSoup(html_content, 'html.parser')
+                        links = soup.find_all('a')
+                        for link in links:
+                            href = link.get('href')
+                            if href and is_relevant_link(href) and href not in printed_links:
+                                relevant_links.append(href)
+                                printed_links.add(href)
+
+    except imaplib.IMAP4.error as e:
+        print(f"IMAP error: {e}")
+
+    finally:
+        # 关闭连接
+        mail.logout()
+
+    return relevant_links
+
+# 主函数：优先尝试 POP3，然后再尝试 IMAP
+def check_email_for_activation_link(email_user, email_password):
+    # 先尝试使用 POP3
+    relevant_links = check_email_pop3(email_user, email_password)
+
+    # 如果 POP3 没有找到链接或没有邮件，改用 IMAP
+    if not relevant_links:
+        print("No links found with POP3, trying IMAP...")
+        relevant_links = check_email_imap(email_user, email_password)
+
+    if not relevant_links:
+        print("No activation links found.")
+        return 'nothing'
+
+    return relevant_links
+
+
+# def check_email_for_activation_link(email_user, email_password):
+#     # 连接到 POP3 服务器
+#     pop3_url = 'pop.outlook.com'  # POP3 服务器地址，适用于 Outlook 和 Hotmail
+#     pop3 = poplib.POP3_SSL(pop3_url)
+#
+#     # 保存已打印的链接
+#     printed_links = set()
+#     relevant_links = []
+#
+#     try:
+#         # 登录邮箱账号
+#         pop3.user(email_user)
+#         pop3.pass_(email_password)
+#
+#         # 获取邮件数量
+#         num_messages = len(pop3.list()[1])
+#
+#         if num_messages == 0:
+#             print("has no email")
+#             return 'nothing'
+#
+#         # 遍历邮件并提取内容和链接
+#         for i in range(num_messages):
+#             # 获取邮件
+#             raw_email = b'\n'.join(pop3.retr(i+1)[1])
+#             msg = BytesParser(policy=default).parsebytes(raw_email)
+#
+#             # 提取邮件正文
+#             if msg.is_multipart():
+#                 for part in msg.iter_parts():
+#                     content_type = part.get_content_type()
+#                     if content_type == 'text/html':
+#                         html_content = part.get_payload(decode=True).decode()
+#                         soup = BeautifulSoup(html_content, 'html.parser')
+#                         links = soup.find_all('a')
+#                         for link in links:
+#                             href = link.get('href')
+#                             if href and is_relevant_link(href) and href not in printed_links:
+#                                 relevant_links.append(href)
+#                                 printed_links.add(href)
+#             else:
+#                 content_type = msg.get_content_type()
+#                 if content_type == 'text/html':
+#                     html_content = msg.get_payload(decode=True).decode()
+#                     soup = BeautifulSoup(html_content, 'html.parser')
+#                     links = soup.find_all('a')
+#                     for link in links:
+#                         href = link.get('href')
+#                         if href and is_relevant_link(href) and href not in printed_links:
+#                             relevant_links.append(href)
+#                             printed_links.add(href)
+#
+#     except poplib.error_proto as e:
+#         print(f"POP3 error: {e}")
+#
+#     finally:
+#         # 关闭连接
+#         pop3.quit()
 
     # 返回符合条件的激活链接
     return relevant_links

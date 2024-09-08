@@ -49,14 +49,24 @@ def generate_random_string(length):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
-def createBrowser(stay, country_in):  # 创建或者更新窗口，指纹参数 browserFingerPrint 如没有特定需求，只需要指定下内核即可，如果需要更详细的参数，请参考文档
+def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，指纹参数 browserFingerPrint 如没有特定需求，只需要指定下内核即可，如果需要更详细的参数，请参考文档
     # 随机选择代理国家代码
     #country_codes = ['au', 'ca', 'us', 'gb']
-    if not stay:
+    if not stay and offername == 'jerkmate':
+        print('selected 1')
         country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'is', 'ie', 'it', 'no', 'pr', 'se', 'nz', 'hk', 'jp', 'ch', 'bm', 'cl']
+        selected_country_code = random.choice(country_codes)
+    elif not stay and offername == 'royalcams':
+        print('selected 2')
+        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi', 'il', 'ru']
+        selected_country_code = random.choice(country_codes)
+    elif not stay and offername == 'bongacams':
+        print('selected 3')
+        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi']
         selected_country_code = random.choice(country_codes)
     else:
         selected_country_code = country_in
+
 
     # 生成随机字符串
     random_string = generate_random_string(8)  # 生成8位随机字符串，与nnD2H1bq长度相同
@@ -77,21 +87,43 @@ def createBrowser(stay, country_in):  # 创建或者更新窗口，指纹参数 
     #        'coreVersion': '126'  # 内核版本，注意，win7/win8/winserver 2012 已经不支持112及以上内核了，无法打开
     #    }
     #}
-    resolution = random.choice(['1024 x 768', '1280 x 800', '1280 x 960', '1920 x 1080', '1440 x 900', '1280 x 1024'])
+    #resolution = random.choice(['1024 x 768', '1280 x 800', '1280 x 960', '1920 x 1080', '1440 x 900', '1280 x 1024'])
     os = weighted_random_choice(os_options)
 
     if os == 'Linux armv81':
         ostype = 'Android'
         hardwareConcurrency = random.choice([6, 8, 10, 12])
         deviceMemory = random.choice([6, 8, 12])
+        resolution = random.choice([
+            '1080 x 1920',  # 全高清竖屏
+            '1440 x 2560',  # 2K竖屏
+            '720 x 1280',   # 常见的720p竖屏
+            '1440 x 3040',  # 一些高端手机
+            '1080 x 2280',  # 流行的宽高比 19:9
+        ])
     elif os == 'iPhone':
         ostype = 'IOS'
         hardwareConcurrency = random.choice([4, 6, 8])
         deviceMemory = random.choice([4, 6, 8])
+        resolution = random.choice([
+            '828 x 1792',   # iPhone XR
+            '1125 x 2436',  # iPhone X, XS
+            '1242 x 2688',  # iPhone XS Max
+            '1170 x 2532',  # iPhone 12, 12 Pro
+            '1284 x 2778',  # iPhone 12 Pro Max
+        ])
     else:
         ostype = 'PC'
         hardwareConcurrency = random.choice([4, 6, 8, 12, 16, 18, 24, 32])
         deviceMemory = random.choice([2, 4, 6, 8, 12, 16, 24, 32, 64])
+        resolution = random.choice([
+            '1920 x 1080',  # 常见的全高清
+            '2560 x 1440',  # 2K分辨率
+            '1366 x 768',  # 常见的笔记本分辨率
+            '1440 x 900',  # 常见的MacBook分辨率
+            '1280 x 1024',  # 5:4显示器
+            '1680 x 1050',  # 宽屏
+        ])
 
     json_data = {
         "groupId": "",  # 群组ID，绑定群组时传入，如果登录的是子账号，则必须赋值，否则会自动分配到主账户下面去
