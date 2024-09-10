@@ -33,6 +33,7 @@ async def random_click_element(page, selector):
     try:
         # 获取元素
         element = await page.query_selector(selector)
+        print('xufuhai random_click_element:', element)
         if element:
             # 获取元素的边界框
             bounding_box = await element.bounding_box()
@@ -129,7 +130,9 @@ async def random_scroll_page(page):
         start_y = random.uniform(0, total_height - 100)  # 保证滑动不会超出页面
         end_y = random.uniform(start_y, total_height)
         start_x = random.uniform(0, body_box['width'])  # 随机水平位置
-        end_x = start_x  # 垂直滑动，不改变水平位置
+        #end_x = start_x  # 垂直滑动，不改变水平位置
+        # 允许 end_x 在 start_x 附近做小范围的水平移动
+        end_x = random.uniform(max(0, start_x - 50), min(body_box['width'], start_x + 50))
 
         # 执行滚动操作
         await page.evaluate(f"window.scrollTo({start_x}, {start_y})")
@@ -153,7 +156,9 @@ async def random_touch_scroll_page(page):
         start_y = random.uniform(0, total_height - 100)  # 保证滑动不会超出页面
         end_y = random.uniform(start_y, total_height)
         start_x = random.uniform(0, body_box['width'])  # 随机水平位置
-        end_x = start_x  # 垂直滑动，不改变水平位置
+        #end_x = start_x  # 垂直滑动，不改变水平位置
+        end_x = random.uniform(max(0, start_x - 50), min(body_box['width'], start_x + 50))
+
 
         # 执行触控滑动操作
         await page.touchscreen.tap(start_x, start_y)

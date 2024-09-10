@@ -80,7 +80,7 @@ def check_email_pop3(email_user, email_password):
 
         # 获取邮件数量
         num_messages = len(pop3.list()[1])
-
+        print('num_messages:', num_messages)
         if num_messages == 0:
             print("POP3: no email")
             return relevant_links
@@ -276,8 +276,8 @@ def check_email_for_activation_link(email_user, email_password):
 #         # 关闭连接
 #         pop3.quit()
 
-    # 返回符合条件的激活链接
-    return relevant_links
+      # 返回符合条件的激活链接
+#      return relevant_links
 
 def is_relevant_link(href):
     keywords = ['signup', 'confirm', 'email']
