@@ -64,6 +64,14 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，�
         print('selected 3')
         country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi']
         selected_country_code = random.choice(country_codes)
+    elif not stay and offername == 'cam4':
+        print('selected 4')
+        country_codes = ['ca', 'us', 'gb', 'fr', 'it', 'se', 'de', 'ch', 'nl']
+        selected_country_code = random.choice(country_codes)
+    elif not stay and offername == 'Flirtejetzt':
+        print('selected 5')
+        country_codes = ['at']
+        selected_country_code = random.choice(country_codes)
     else:
         selected_country_code = country_in
 

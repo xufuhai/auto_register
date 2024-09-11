@@ -16,13 +16,13 @@ def generate_password(min_length=9, max_length=14):
     uppercase = string.ascii_uppercase
     lowercase = string.ascii_lowercase
     digits = string.digits
-    punctuation = string.punctuation.replace("'", "").replace('"', "")  # 去掉单引号和双引号
+    punctuation = "!#$"  # 限制特殊字符集为!#$
 
     # 至少一个字符的不同类别
     required_chars = [
         random.choice(uppercase),  # 至少一个大写字母
         random.choice(lowercase),  # 至少一个小写字母
-        random.choice(digits),  # 至少一个数字
+        random.choice(digits),     # 至少一个数字
         random.choice(punctuation)  # 至少一个特殊字符
     ]
 
@@ -42,7 +42,7 @@ def generate_password(min_length=9, max_length=14):
     random.shuffle(password_chars)
 
     # 确保特殊字符和数字不在开头
-    while any(c in digits + punctuation for c in password_chars[:2]):
-        random.shuffle(password_chars)
+    if password_chars[0] in digits + punctuation:
+        random.shuffle(password_chars[1:])
 
     return ''.join(password_chars)
