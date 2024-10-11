@@ -18,12 +18,21 @@ city = ''
 postal = ''
 
 # 权重比例和对应的操作系统选项
+#os_options = [
+#    ('Linux armv81', 4),
+#    ('iPhone', 2),
+#    ('Win64', 2),
+#    ('Win32', 1),
+#    ('MacIntel', 0.8),
+#    ('Linux x86_64', 0.2)
+#]
+
 os_options = [
     ('Linux armv81', 4),
     ('iPhone', 2),
-    ('Win64', 2),
-    ('Win32', 1),
-    ('MacIntel', 0.8),
+    ('Win64', 2000),
+    ('Win32', 1000),
+    ('MacIntel', 1000),
     ('Linux x86_64', 0.2)
 ]
 
@@ -58,7 +67,8 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，�
         selected_country_code = random.choice(country_codes)
     elif not stay and offername == 'royalcams':
         print('selected 2')
-        country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi', 'il', 'ru']
+        #country_codes = ['au', 'ca', 'us', 'gb', 'dk', 'fr', 'it', 'no', 'cs', 'se', 'nz', 'de', 'ee', 'ch', 'be', 'fi', 'il', 'ru']
+        country_codes = ['us', 'ca', 'dk', 'fi', 'no', 'ch', 'uk', 'se', 'au']
         selected_country_code = random.choice(country_codes)
     elif not stay and offername == 'bongacams':
         print('selected 3')
@@ -152,10 +162,16 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，�
         #"port": '32325',  # 代理端口
         #"proxyUserName": 'qKJE32NQAh8KjaON',  # 代理账号
         #"proxyPassword": f'XyPPDxNlMmvxMOGN_country-{selected_country_code}_session-{random_string}_lifetime-24h_streaming-1',  # 代理密码
-        "host": 'us.naproxy.net',  # 代理主机
-        "port": '1000',  # 代理端口
-        "proxyUserName": f'proxy-ethanxu_area-{selected_country_code}_session-{random_string}_life-120',  # 代理账号
-        "proxyPassword": 'xufuhai111', # 代理密码
+        #naproxy
+        #"host": 'us.naproxy.net',  # 代理主机
+        #"port": '1000',  # 代理端口
+        #"proxyUserName": f'proxy-ethanxu_area-{selected_country_code}_session-{random_string}_life-120',  # 代理账号
+        #"proxyPassword": 'xufuhai111', # 代理密码
+        #ipidea
+        "host": '51e4f38df2eaf607.na.ipidea.online',  # 代理主机
+        "port": '2333',  # 代理端口
+        "proxyUserName": f'wumitech_cancer_gray-zone-custom-region-{selected_country_code}-session-{random_string}-sessTime-60',  # 代理账号
+        "proxyPassword": 'SA0k8P1VswU',  # 代理密码
         'dynamicIpUrl': '',  # proxyMethod = 3时，提取IP链接
         'dynamicIpChannel': '',  # 提取链接服务商，rola | doveip | cloudam | common
         'isDynamicIpChangeIp': False,  # 每次打开都提取新IP，默认false
@@ -177,11 +193,11 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，�
         'syncSessions': False,  # 同步浏览器Sessions，历史记录最近关闭的标签相关，默认false
         'clearCacheFilesBeforeLaunch': False,  # 启动前清理缓存文件，默认false
         "browserFingerPrint": {  # 指纹对象
-            'coreVersion': '126',
+            'coreVersion': '128',
             'ostype': ostype,  # 操作系统平台 PC|Android|IOS
             'os': os,
             # 为navigator.platform值 Win32 | Linux i686 | Linux armv7l | MacIntel，当ostype设置为IOS时，设置os为iPhone，ostype为Android时，设置为 Linux i686 || Linux armv7l
-            'version': str(random.randint(124, 127)),  # 浏览器版本
+            'version': str(random.randint(124, 128)),  # 浏览器版本
             'userAgent': '',
             'timeZone': '',  # 时区
             'timeZoneOffset': 0,  # 时区偏移量

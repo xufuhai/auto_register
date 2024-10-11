@@ -134,8 +134,11 @@ def check_email_pop3(email_user, email_password):
         return relevant_links
     else:
         print('xufuhai2')
-        relevant_links.append(return_link[1])
-        return relevant_links
+        if return_link:
+            relevant_links.append(return_link[1])
+            return relevant_links
+        else:
+            return relevant_links
         #return return_link[1]
 
 # IMAP 检查函数

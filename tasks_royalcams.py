@@ -87,12 +87,19 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
     try:
         if ostype == 'PC':
             print("xufuhaixufuhai")
-            await page.wait_for_selector('a.bt30.bt30_green.bc_uppercase.join_btn', state='visible')
+            await page.goto('https://royalcams.com/', timeout=150000)
+            await random_pause()
+            await page.wait_for_selector('a#btn_signup.bt30.bt30_green.bc_uppercase.join_btn', state='visible')
+            #await page.wait_for_selector('a#bLovers.chatBtn', state='visible')
             print("xufuhaixufuhai1")
             await random_pause()
-            await random_click_element(page, 'a.bt30.bt30_green.bc_uppercase.join_btn')
+            await random_click_element(page, 'a#btn_signup.bt30.bt30_green.bc_uppercase.join_btn')
+            #await random_click_element(page, 'a#bLovers.chatBtn')
+            #await document.querySelector('a#btn_signup.bt30.bt30_green.bc_uppercase.join_btn').click()
             await random_pause()
-            await random_click_element(page, 'a.bt30.bt30_green.bc_uppercase.join_btn')
+            #await random_click_element(page, 'a#btn_signup.bt30.bt30_green.bc_uppercase.join_btn')
+            #await random_click_element(page, 'a#bLovers.chatBtn')
+            #await document.querySelector('a#bLovers.chatBtn').click()
             print("xufuhaixufuhai2")
         else:
             print("xufuhaixufuhai")
@@ -106,6 +113,7 @@ async def run(playwright: Playwright, email, username, password, url, ostype):
 
     except Exception:
         print("Button not found or not visible. Skipping click.")
+
 
     await random_pause()
     # 等待并点击 "NEXT" 按钮
@@ -298,8 +306,8 @@ detailes = detailBrowser(browser_id)
 #url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
 #url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
 #url='https://t.ajrkm.link/340062/2994/19129?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
-url='https://t.ajrkm.link/334905/2994/8995?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
-#url=sys.argv[1]
+#url='https://t.ajrkm.link/334905/2994/8995?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
+url=sys.argv[1]
 print(url)
 username=generate_username()
 #url='https://sweetydating.online/im/click.php?c=17&key=8ql18onn77ez91a7128cz2ga'

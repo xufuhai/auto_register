@@ -1,0 +1,1152 @@
+From eac455dda0be7e6d59dc7438b0e58b9e9af7b699 Mon Sep 17 00:00:00 2001
+From: ethanxu <xufuhai1992@gmail.com>
+Date: Fri, 20 Sep 2024 20:41:44 +0800
+Subject: [PATCH] support Flirtejetzt
+
+Signed-off-by: ethanxu <xufuhai1992@gmail.com>
+---
+ action.py             |   1 +
+ bit_api.py            |  12 +-
+ database.py           |   6 +
+ email_utils.py        |  81 +++++--
+ emailtest_gmail.py    | 194 +++++++++++++++++
+ emailtest_imap.py     |   3 +-
+ emailtest_selenium.py | 189 +++++++++++++++++
+ exec_stay.sh          |   4 +
+ tasks_Flirtejetzt.py  | 475 ++++++++++++++++++++++++++++++++++++++++++
+ 9 files changed, 947 insertions(+), 18 deletions(-)
+ create mode 100644 emailtest_gmail.py
+ create mode 100644 emailtest_selenium.py
+ create mode 100755 exec_stay.sh
+ create mode 100644 tasks_Flirtejetzt.py
+
+diff --git a/action.py b/action.py
+index 57b6cd0..e6008ee 100644
+--- a/action.py
++++ b/action.py
+@@ -31,6 +31,7 @@ async def get_clickable_and_focusable_elements(page):
+ 
+ async def random_click_element(page, selector):
+     try:
++        await page.wait_for_selector(selector, timeout=150000, state='visible')
+         # 获取元素
+         element = await page.query_selector(selector)
+         print('xufuhai random_click_element:', element)
+diff --git a/bit_api.py b/bit_api.py
+index 5ee508c..a67d32e 100644
+--- a/bit_api.py
++++ b/bit_api.py
+@@ -68,7 +68,7 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，
+         print('selected 4')
+         country_codes = ['ca', 'us', 'gb', 'fr', 'it', 'se', 'de', 'ch', 'nl']
+         selected_country_code = random.choice(country_codes)
+-    elif not stay and offername == 'Flirtejetzt':
++    elif not stay and offername == 'FlirteJetzt':
+         print('selected 5')
+         country_codes = ['at']
+         selected_country_code = random.choice(country_codes)
+@@ -177,11 +177,13 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，
+         'syncSessions': False,  # 同步浏览器Sessions，历史记录最近关闭的标签相关，默认false
+         'clearCacheFilesBeforeLaunch': False,  # 启动前清理缓存文件，默认false
+         "browserFingerPrint": {  # 指纹对象
+-            'coreVersion': '126',
+-            'ostype': ostype,  # 操作系统平台 PC|Android|IOS
+-            'os': os,
++            'coreVersion': '128',
++            'ostype': 'PC',  # 操作系统平台 PC|Android|IOS
++            #'ostype': ostype,  # 操作系统平台 PC|Android|IOS
++            #'os': os,
++            'os': 'Win64',
+             # 为navigator.platform值 Win32 | Linux i686 | Linux armv7l | MacIntel，当ostype设置为IOS时，设置os为iPhone，ostype为Android时，设置为 Linux i686 || Linux armv7l
+-            'version': str(random.randint(124, 127)),  # 浏览器版本
++            'version': str(random.randint(124, 128)),  # 浏览器版本
+             'userAgent': '',
+             'timeZone': '',  # 时区
+             'timeZoneOffset': 0,  # 时区偏移量
+diff --git a/database.py b/database.py
+index 3839889..182895a 100644
+--- a/database.py
++++ b/database.py
+@@ -33,6 +33,12 @@ def insert_registration_task(url, email, password, proxy_ip, user_agent, country
+         values_update = ('1', email)
+     elif offer == 'royalcams':
+         values_update = ('2', email)
++    elif offer == 'bongacams':
++        values_update = ('3', email)
++    elif offer == 'cam4':
++        values_update = ('4', email)
++    elif offer == 'FlirteJetzt':
++        values_update = ('5', email)
+     cursor.execute(query_update, values_update)
+     conn.commit()
+     print("Record updated in buy_email successfully")
+diff --git a/email_utils.py b/email_utils.py
+index 7f625c7..efea48c 100644
+--- a/email_utils.py
++++ b/email_utils.py
+@@ -7,6 +7,26 @@ from email.parser import BytesParser
+ from email.policy import default
+ from bs4 import BeautifulSoup
+ import time
++import logging
++
++def list_folders(username, password):
++    try:
++        # 连接到 IMAP 服务器并登录
++        mail = imaplib.IMAP4_SSL("outlook.office365.com")
++        mail.login(username, password)
++
++        # 列出所有文件夹
++        status, folders = mail.list()
++        if status == "OK":
++            for folder in folders:
++                print(folder.decode())
++        else:
++            logging.error(f"无法列出文件夹: {status}")
++
++        mail.logout()
++    except Exception as e:
++        logging.error(f"连接或登录失败: {e}")
++
+ 
+ async def extract_confirmation_url(page):
+     # 查找包含特定 URL 的第一个链接
+@@ -66,7 +86,7 @@ async def check_gmail_for_activation_link(email_user, email_password, revovery_e
+     return activate_link
+ 
+ # POP3 检查函数
+-def check_email_pop3(email_user, email_password):
++def check_email_pop3(email_user, email_password, offer=''):
+     pop3_url = 'pop.outlook.com'  # POP3 服务器地址，适用于 Outlook 和 Hotmail
+     pop3 = poplib.POP3_SSL(pop3_url)
+ 
+@@ -132,28 +152,36 @@ def check_email_pop3(email_user, email_password):
+     if relevant_links:
+         print('xufuhai1')
+         return relevant_links
+-    else:
++    elif return_link:
+         print('xufuhai2')
+-        relevant_links.append(return_link[1])
++        if offer == 'FlirteJetzt':
++            relevant_links.append(return_link[2])
++        else:
++            relevant_links.append(return_link[1])
++        return relevant_links
++    else:
+         return relevant_links
+         #return return_link[1]
+ 
+ # IMAP 检查函数
+-def check_email_imap(email_user, email_password):
+-    imap_url = 'imap-mail.outlook.com'  # IMAP 服务器地址，适用于 Outlook 和 Hotmail
++def check_email_imap(email_user, email_password, offer=''):
++    #imap_url = 'imap-mail.outlook.com'  # IMAP 服务器地址，适用于 Outlook 和 Hotmail
++    imap_url = 'outlook.office365.com'
+     mail = imaplib.IMAP4_SSL(imap_url)
+ 
+     printed_links = set()
+     relevant_links = []
++    return_link = []
+ 
+     try:
+         # 登录邮箱
+         mail.login(email_user, email_password)
+ 
+         # 遍历收件箱和垃圾邮箱
+-        folders_to_check = ['INBOX', 'Junk']  # 'Junk' 可能是垃圾邮件的文件夹名称，视服务商而定
++        folders_to_check = ['Junk', 'Inbox']  # 'Junk' 可能是垃圾邮件的文件夹名称，视服务商而定
+ 
+         for folder in folders_to_check:
++            print(folder)
+             mail.select(folder)
+ 
+             # 搜索所有邮件
+@@ -189,10 +217,13 @@ def check_email_imap(email_user, email_password):
+                             links = soup.find_all('a')
+                             for link in links:
+                                 href = link.get('href')
++                                return_link.append(href)
++                                print(href)
+                                 if href and is_relevant_link(href) and href not in printed_links:
+                                     relevant_links.append(href)
+                                     printed_links.add(href)
+                 else:
++                    print('xufuhai')
+                     content_type = msg.get_content_type()
+                     if content_type == 'text/html':
+                         html_content = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
+@@ -200,32 +231,58 @@ def check_email_imap(email_user, email_password):
+                         links = soup.find_all('a')
+                         for link in links:
+                             href = link.get('href')
++                            return_link.append(href)
+                             if href and is_relevant_link(href) and href not in printed_links:
+                                 relevant_links.append(href)
+                                 printed_links.add(href)
+ 
+     except imaplib.IMAP4.error as e:
+         print(f"IMAP error: {e}")
++        return 'error'
+ 
+     finally:
+         # 关闭连接
+         mail.logout()
+ 
+-    return relevant_links
++    print('return_link:', return_link)
++    print('relevant_links:', relevant_links)
++    if relevant_links:
++        print('xufuhai1')
++        return relevant_links
++    elif return_link:
++        print('xufuhai2')
++        if offer == 'FlirteJetzt':
++            relevant_links.append(return_link[2])
++        else:
++            relevant_links.append(return_link[1])
++        return relevant_links
++    else:
++        return relevant_links
+ 
+ # 主函数：优先尝试 POP3，然后再尝试 IMAP
+-def check_email_for_activation_link(email_user, email_password):
++def check_email_for_activation_link(email_user, email_password, offer=''):
+     # 先尝试使用 POP3
+-    relevant_links = check_email_pop3(email_user, email_password)
++    relevant_links = check_email_pop3(email_user, email_password, offer)
+     # 如果 POP3 没有找到链接或没有邮件，改用 IMAP
+     if not relevant_links:
+         print("No links found with POP3, trying IMAP...")
+-        relevant_links = check_email_imap(email_user, email_password)
++        relevant_links = check_email_imap(email_user, email_password, offer)
+ 
+     if not relevant_links:
+         print("No activation links found.")
+         return 'nothing'
+-
++    elif relevant_links == 'error':
++        relevant_links = check_email_imap(email_user, email_password, offer)
++        if not relevant_links:
++            print("No activation links found.")
++            return 'nothing'
++        elif relevant_links == 'error':
++            relevant_links = check_email_imap(email_user, email_password, offer)
++            if not relevant_links:
++                print("No activation links found.")
++                return 'nothing'
++            elif relevant_links == 'error':
++                return 'nothing'
+     return relevant_links
+ 
+ 
+@@ -292,7 +349,7 @@ def check_email_for_activation_link(email_user, email_password):
+ #      return relevant_links
+ 
+ def is_relevant_link(href):
+-    keywords = ['signup', 'confirm', 'email']
++    keywords = ['signup', 'confirm', 'email', 'activate']
+     #keywords = ['cam']
+     return any(keyword in href for keyword in keywords)
+ 
+diff --git a/emailtest_gmail.py b/emailtest_gmail.py
+new file mode 100644
+index 0000000..a2e5694
+--- /dev/null
++++ b/emailtest_gmail.py
+@@ -0,0 +1,194 @@
++from playwright.async_api import async_playwright
++import json
++
++from celeryconfig import app
++from ai import simulate_human_clicks, simulate_human_actions
++from email_utils import check_email_for_activation_link, activate_email, check_email_for_activation_link, check_gmail_for_activation_link
++from database import insert_registration_task, get_random_email_with_status_zero, get_email_passwd_with_email, get_email_passwd_with_recoveryemail
++from bit_api import *
++import time
++import asyncio
++from playwright.async_api import async_playwright, Playwright
++import random
++from faker import Faker
++import string
++import traceback
++import sys
++from common_function import *
++from action import *
++from email_random_gen import *
++import re
++
++# 贝塞尔曲线模拟鼠标移动的函数
++def bezier_curve(p0, p1, p2, p3, t):
++    return (
++        (1 - t) ** 3 * p0
++        + 3 * (1 - t) ** 2 * t * p1
++        + 3 * (1 - t) * t ** 2 * p2
++        + t ** 3 * p3
++    )
++
++# 模拟自然鼠标移动的函数
++async def move_mouse_naturally(page, start_x, start_y, end_x, end_y, steps=20):
++    # 随机生成中间控制点
++    control_point_1_x = start_x + (end_x - start_x) / 3 + random.uniform(-100, 100)
++    control_point_1_y = start_y + (end_y - start_y) / 3 + random.uniform(-100, 100)
++    control_point_2_x = start_x + 2 * (end_x - start_x) / 3 + random.uniform(-100, 100)
++    control_point_2_y = start_y + 2 * (end_y - start_y) / 3 + random.uniform(-100, 100)
++
++    # 在多个时间点上插值计算贝塞尔曲线位置
++    for i in range(steps):
++        t = i / steps
++        x = bezier_curve(start_x, control_point_1_x, control_point_2_x, end_x, t)
++        y = bezier_curve(start_y, control_point_1_y, control_point_2_y, end_y, t)
++        await page.mouse.move(x, y)
++        await asyncio.sleep(random.uniform(0.01, 0.05))  # 每一步加入随机延迟，模拟真实用户手动操作
++
++
++# 主点击函数
++async def human_like_click(page, selector):
++    try:
++        # 获取按钮元素
++        element = await page.query_selector(selector)
++        if not element:
++            print(f"Element with selector '{selector}' not found.")
++            return
++
++        # 检查按钮是否可见并可点击
++        if not (await element.is_visible()):
++            print("Button is not visible!")
++            return
++        if not (await element.is_enabled()):
++            print("Button is not enabled!")
++            return
++
++        # 获取按钮的边界框
++        bounding_box = await element.bounding_box()
++        if not bounding_box:
++            print("Failed to get bounding box for the element.")
++            return
++
++        if not page.viewport_size:
++            await page.set_viewport_size({"width": 1280, "height": 720})
++
++        viewport_width = page.viewport_size['width']
++        viewport_height = page.viewport_size['height']
++
++        # 在按钮范围内生成随机的点击坐标
++        start_x = random.uniform(0, viewport_width)  # 从页面随机位置开始
++        start_y = random.uniform(0, viewport_height)
++        end_x = random.uniform(bounding_box['x'], bounding_box['x'] + bounding_box['width'])
++        end_y = random.uniform(bounding_box['y'], bounding_box['y'] + bounding_box['height'])
++
++        # 模拟自然的鼠标移动
++        await move_mouse_naturally(page, start_x, start_y, end_x, end_y)
++        await asyncio.sleep(random.uniform(0.5, 1.0))  # 停留0.5到1秒
++
++        # 完整的点击流程，确保触发所有事件
++        await page.mouse.down()
++        await asyncio.sleep(random.uniform(0.1, 0.5))
++        await page.mouse.up()
++
++        print(f"Clicked at ({end_x}, {end_y}) within bounding box: {bounding_box}")
++
++        # 这里等待页面反应或跳转，最多等待10秒
++        await page.wait_for_load_state('networkidle', timeout=10000)
++
++    except Exception as e:
++        print(f"An error occurred: {e}")
++
++async def login_gmail(page, email, password):
++    await page.goto('https://accounts.google.com/')
++    await random_pause()
++    # 输入邮箱地址
++    #await page.fill('input[type="email"]', email)
++    #await page.click('button[type="button"]', timeout=30000)  # 点击“下一步”按钮
++
++    #await random_pause()
++    #await page.go_back()
++
++    for char in email:
++        await page.type('input[type="email"]', char)
++        await page.wait_for_timeout(200)
++    #await page.fill('input[type="email"]', email)
++    await human_like_click(page, 'button[type="button"]')
++    #await random_click_element(page, 'button[type="button"]')
++    #await page.click('button[type="button"]', timeout=30000)  # 点击“下一步”按钮
++    await random_pause()
++    # await page.go_back()    # 输入密码
++    # await page.fill('input[type="email"]', email)
++    # await random_click_element(page, 'button[type="button"]')
++    # #await page.click('button[type="button"]', timeout=30000)  # 点击“下一步”按钮
++    # await random_pause()
++    await page.fill('input[type="password"]', password)
++    await random_click_element(page, 'button[type="button"]')
++    #await page.evaluate("document.querySelector('button[type=\"button\"]').click()")
++    #await page.click('button[type="button"]', timeout=30000)  # 点击“下一步”按钮
++    
++    # 等待登录成功后的页面加载
++    #await page.wait_for_selector('div[aria-label="Primary"]', timeout=30000)
++
++    await page.goto('https://mail.google.com/')
++
++async def read_mail(page, subject):
++    # 搜索邮件
++    await page.fill('input[name="q"]', subject)  # 在 Gmail 的搜索栏中输入主题
++    await page.press('input[name="q"]', 'Enter')
++
++    # 等待搜索结果
++    await page.wait_for_selector('tr.zA', timeout=30000)
++
++    # 打开第一封邮件
++    await page.click('tr.zA')
++
++    # 读取邮件内容
++    email_content = await page.inner_text('div[role="main"]')
++
++    print(f"Email Content: {email_content}")
++
++async def main():
++    async with async_playwright() as playwright:
++        global browser_id
++        browser_id, ip, country, city, postal, ostype = createBrowser(False, '', 'FlirteJetzt')
++        #detailes = detailBrowser(browser_id)
++        res = openBrowser(browser_id)
++        print(res)
++        ws = res['data']['ws']
++        print("ws address ==>>> ", ws)
++
++        # detailes = detailBrowser(browser_id)
++        # userAgent = detailes['data']['browserFingerPrint']['userAgent']
++        # ip = detailes['data']['lastIp']
++        # print(userAgent)
++        # print(ip)
++
++        chromium = playwright.chromium
++        browser = await chromium.connect_over_cdp(ws)
++        default_context = browser.contexts[0]
++
++        print('new page and goto baidu')
++
++        page = await default_context.new_page()
++
++        # link = await check_gmail_for_activation_link('lueschenxegaku02@gmail.com', 'IgOAZxYp', 'petrvinogradov2012d3f3m9@yahoo.com', page)
++        # print('activate_link:', link)
++        # await page.goto(link, timeout=100000)
++
++        #await page.goto(url, timeout=150000)
++
++        email = 'nlazurealiso@gmail.com'
++        password = 'Ewscbkout36890'
++
++        # 登录 Gmail
++        await login_gmail(page, email, password)
++
++        # 读取指定主题的邮件内容
++        subject = 'Welcome to Gmail'
++        await read_mail(page, subject)
++
++        await browser.close()
++
++# 运行代码
++import asyncio
++asyncio.run(main())
++
+diff --git a/emailtest_imap.py b/emailtest_imap.py
+index 2766b40..f32b509 100644
+--- a/emailtest_imap.py
++++ b/emailtest_imap.py
+@@ -89,5 +89,6 @@ from email_utils import *
+ #     # 只选择包含 "signup"、"confirm" 或 "email" 的链接，且链接较长
+ #     return any(keyword in url for keyword in ['signup', 'confirm', 'email']) and len(url) > 50
+ 
+-link = check_email_for_activation_link('tzbci5752wob@outlook.com', 'BLL3ezJBiO')
++link = check_email_for_activation_link('whahj3806cbd@outlook.com', 'JR7mLvkSQo')
++#list_folders('whahj3806cbd@outlook.com', 'JR7mLvkSQo')
+ print(link[0])
+diff --git a/emailtest_selenium.py b/emailtest_selenium.py
+new file mode 100644
+index 0000000..4467b0e
+--- /dev/null
++++ b/emailtest_selenium.py
+@@ -0,0 +1,189 @@
++import undetected_chromedriver as uc
++from selenium import webdriver
++# import selenium.webdriver as uc
++from selenium.webdriver.common.by import By
++import time
++from celeryconfig import app
++from ai import simulate_human_clicks, simulate_human_actions
++from email_utils import check_email_for_activation_link, activate_email, check_email_for_activation_link, check_gmail_for_activation_link
++from database import insert_registration_task, get_random_email_with_status_zero, get_email_passwd_with_email, get_email_passwd_with_recoveryemail
++from bit_api import *
++import time
++import asyncio
++from playwright.async_api import async_playwright, Playwright
++import random
++from faker import Faker
++import string
++import traceback
++import sys
++from common_function import *
++from action import *
++from email_random_gen import *
++import re
++from selenium import webdriver
++from selenium.common.exceptions import TimeoutException
++from selenium.webdriver.common.keys import Keys
++from selenium.webdriver.chrome.options import Options
++from bit_api import *
++from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
++from selenium.webdriver.chrome.service import Service
++from selenium.webdriver.common.by import By
++from selenium.webdriver.common.action_chains import ActionChains
++from selenium.webdriver.chrome.options import Options
++from selenium.webdriver.common.keys import Keys
++from selenium.webdriver.support.ui import WebDriverWait
++from selenium.webdriver.support import expected_conditions as EC
++
++
++def check_gmail_mail(email, password):
++    global browser_id
++    browser_id, ip, country, city, postal, ostype = createBrowser(False, '', 'FlirteJetzt')
++    # /browser/open 接口会返回 selenium使用的http地址，以及webdriver的path，直接使用即可
++    res = openBrowser(browser_id) # 窗口ID从窗口配置界面中复制，或者api创建后返回
++
++    print(res)
++
++    driverPath = res['data']['driver']
++    debuggerAddress = res['data']['http']
++
++    # selenium 连接代码
++    chrome_options = webdriver.ChromeOptions()
++    chrome_options.add_experimental_option("debuggerAddress", debuggerAddress)
++
++    chrome_service = Service(driverPath)
++    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
++
++    # # 创建 Chrome 浏览器实例
++    # options = uc.ChromeOptions()
++    #
++    # # 添加忽略SSL错误的参数
++    # options.add_argument('--ignore-certificate-errors')
++    # options.add_argument('--ignore-ssl-errors')
++    # options.add_argument('--allow-insecure-localhost')  # 可选，忽略本地SSL错误
++    # # 启用一些常用的选项，比如禁用自动化检测、无头模式等
++    # options.add_argument("--disable-blink-features=AutomationControlled")
++    #
++    # # 设置 Chrome 浏览器路径（如果你想使用本地已安装的浏览器）
++    # # 比如 Mac 上的路径可以是 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
++    # # Windows 的路径例如: "C:/Program Files/Google/Chrome/Application/chrome.exe"
++    # options.binary_location = "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
++    #
++    # # 启动 undetected-chromedriver 并且打开指定的 URL
++    # driver = uc.Chrome(options=options)
++    # 打开Gmail登录页面
++    driver.get('https://mail.google.com/')
++ 
++    # 找到用户名输入框并输入用户名
++    username_input = driver.find_element(value='identifierId')
++    #username = 'nlazurealiso@gmail.com'  # 替换成您的Gmail邮箱地址
++
++    username_input.send_keys(email)
++    time.sleep(10)
++ 
++    # 点击“下一步”按钮 VfPpkd-vQzf8d
++    next_button = driver.find_element(value='identifierNext')
++    next_button.click()
++    time.sleep(10)
++ 
++    # 你的邮箱密码
++    #password = "Ewscbkout36890"
++    password_input = driver.find_element(by=By.NAME, value='Passwd')
++    password_input.send_keys(password)
++    time.sleep(10)
++    # 点击“下一步”按钮
++    next_button = driver.find_elements(by=By.TAG_NAME,value='button')
++    next_button[1].click()
++    print('xufuhai jump')
++    driver.get('https://mail.google.com/')
++    print('after xufuhai jump')
++    time.sleep(10)
++    driver.get('https://mail.google.com/')
++    time.sleep(20)
++    # # 通过 aria-label 定位元素
++    # button = driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Menu"]')
++    # # 使用 ActionChains 执行点击操作
++    # actions = ActionChains(driver)
++    # actions.move_to_element(button).click().perform()
++    # time.sleep(20)
++    # 使用XPath找到目标元素
++    button = driver.find_element(By.XPATH, '//span[@role="button" and @aria-label="More labels"]')
++
++    # 确认元素可见并点击
++    #WebDriverWait(driver, 10).until(EC.element_to_be_clickable(button))
++    #time.sleep(10)
++
++    # 执行点击操作
++    button.click()
++    print("More labels Button clicked successfully.")
++    time.sleep(10)
++    # 使用XPath找到包含Spam的<a>元素
++    spam_link = driver.find_element(By.XPATH, '//a[@aria-label="Spam 1 unread"]')
++
++    # 确认元素可点击
++    #WebDriverWait(driver, 10).until(EC.element_to_be_clickable(spam_link))
++
++    # 执行点击操作
++    spam_link.click()
++    print("Spam link clicked successfully.")
++
++    # # 通过 class 定位元素
++    # button = driver.find_element(By.CSS_SELECTOR, 'div.CqrfPb.UgTiZc.DxbtB[role="menuitem"]')
++    # # 使用 ActionChains 模拟点击
++    # actions = ActionChains(driver)
++    # actions.move_to_element(button).click().perform()
++    # time.sleep(10)
++
++    # 查找包含'the google account team'的div，忽略大小写
++    # div_element = WebDriverWait(driver, 10).until(
++    #     EC.presence_of_element_located((By.XPATH,
++    #                                     "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'Google')]"))
++    # )
++    #
++    # # 点击找到的元素
++    # div_element.click()
++    # print("Element containing 'the google account team' clicked successfully.")
++
++    # 获取所有 role="listitem" 的 div 元素
++    # 查找 <span> 元素，包含 name="Google"
++    # google_element = WebDriverWait(driver, 10).until(
++    #     #EC.presence_of_element_located((By.XPATH, "//span[@name='FlirteJetzt']"))
++    #     EC.presence_of_element_located((By.XPATH, "//span[@name='Google']"))
++    # )
++    #
++    # # 点击找到的元素
++    # google_element.click()
++    # 等待用户手动登录或用程序自动登录，然后找到发件人 Google
++    # 等待页面加载并找到邮件发件人为 'no-reply@accounts.google.com' 的行
++    email_sender_xpath = "//span[@email='mail@flirtejetzt.com']/ancestor::tr"
++
++    # 等待直到邮件元素可见
++    email_row = WebDriverWait(driver, 10).until(
++        EC.visibility_of_element_located((By.XPATH, email_sender_xpath))
++    )
++    email_row.click()
++    print("Element with name='flirtejetzt' clicked successfully.")
++    time.sleep(10)
++
++    # 查找所有 <a> 元素
++    links = driver.find_elements(By.TAG_NAME, 'a')
++
++    # 提取所有 <a> 元素的 href 属性值
++    href_values = [link.get_attribute('href') for link in links if link.get_attribute('href')]
++    return_value = []
++    # 打印 href 属性值
++    for href in href_values:
++        print(href)
++        if 'flirtejetzt' in href:
++            return_value.append(href)
++
++    print('href_values:', href_values)
++
++    time.sleep(3)
++    # 退出
++    driver.close()
++    driver.quit()
++    return return_value[2]
++
++# check_gmail_mail('nlazurealiso@gmail.com', 'Ewscbkout36890')
++a = check_gmail_mail('ruhulpollad@gmail.com','0988767890qwwerr')
++print('xufuhai:', a)
+diff --git a/exec_stay.sh b/exec_stay.sh
+new file mode 100755
+index 0000000..5a78fdd
+--- /dev/null
++++ b/exec_stay.sh
+@@ -0,0 +1,4 @@
++#!/bin/bash
++for i in {1..10}; do
++    python3 tasks_jerkmate_stay.py
++done
+diff --git a/tasks_Flirtejetzt.py b/tasks_Flirtejetzt.py
+new file mode 100644
+index 0000000..7d6163b
+--- /dev/null
++++ b/tasks_Flirtejetzt.py
+@@ -0,0 +1,475 @@
++import json
++
++from celeryconfig import app
++from ai import simulate_human_clicks, simulate_human_actions
++from email_utils import check_email_for_activation_link, activate_email, check_email_for_activation_link, check_gmail_for_activation_link
++from database import insert_registration_task, get_random_email_with_status_zero, get_email_passwd_with_email, get_email_passwd_with_recoveryemail
++from bit_api import *
++import time
++import asyncio
++from playwright.async_api import async_playwright, Playwright
++import random
++from faker import Faker
++import string
++import traceback
++import sys
++from common_function import *
++from action import *
++from email_random_gen import *
++import re
++
++async def run(playwright: Playwright, email, username, password, url, ostype, city, offer):
++  #browser_id = createBrowser()
++  try:
++    # /browser/open 接口会返回 selenium使用的http地址，以及webdriver的path，直接使用即可
++    #browser_id = createBrowser()
++    global browser_id
++    res = openBrowser(browser_id)
++    print(res)
++    ws = res['data']['ws']
++    print("ws address ==>>> ", ws)
++
++    #detailes = detailBrowser(browser_id)
++    #userAgent = detailes['data']['browserFingerPrint']['userAgent']
++    #ip = detailes['data']['lastIp']
++    #print(userAgent)
++    #print(ip)
++
++    chromium = playwright.chromium
++    browser = await chromium.connect_over_cdp(ws)
++    default_context = browser.contexts[0]
++
++    print('new page and goto baidu')
++
++    page = await default_context.new_page()
++
++    #link = await check_gmail_for_activation_link('lueschenxegaku02@gmail.com', 'IgOAZxYp', 'petrvinogradov2012d3f3m9@yahoo.com', page)
++    #print('activate_link:', link)
++    #await page.goto(link, timeout=100000)
++
++    await page.goto(url, timeout=150000)
++
++    # 获取最终重定向后的URL
++    final_url = page.url
++    print(f"Final URL after redirection: {final_url}")
++    last_url = re.sub(r'landing\d+', 'landing2', final_url)
++
++    await page.goto(last_url, timeout=150000)
++
++    await scroll_page(page, False)
++    await random_pause()
++    await scroll_page(page, False)
++    await random_pause()
++    print('xufuhaixufuhaibegin')
++    #await page.reload()
++    # await random_pause()
++    # #await page.wait_for_selector('button.align-right.secondary.slidedown-button')
++    # # 在原页面点击链接，触发新标签页打开
++    # await random_click_element(page, 'button.align-right.secondary.slidedown-button')
++    # #await page.wait_for_selector('a[href*="bongacams.com/popular-chat"]', state='visible')
++    # # 在原页面点击链接，触发新标签页打开
++    # #await random_click_element(page, 'a[href*="bongacams.com/popular-chat"]')
++    # await page.wait_for_selector('a[href*="/out/model"]')
++    # # 在原页面点击链接，触发新标签页打开
++    # await random_click_element(page,'a[href*="/out/model"]')
++    # #await page.wait_for_selector('div.profile-img-ctn')
++    # await random_pause()
++    # await page.reload()
++    # await random_click_element(page, 'div.profile-img-ctn')
++    # await random_pause()
++    # await random_click_element(page, 'img.profile-img')
++    # await random_pause()
++    # # 在原页面点击链接，触发新标签页打开
++    # await random_click_element(page, 'a[href*="/out/homepage"]')
++    # #await page.wait_for_selector('a.header-button span')
++    # # 在原页面点击链接，触发新标签页打开
++    # await random_click_element(page,'a.header-button span')
++    # await random_click_element(page, 'a.button-gradient span')
++    # print('xufuhaixufuhai')
++    # #await wait_for_element_whether_exists(page, "button#answer2")
++    # await random_pause()
++    # await page.reload()
++    # await random_pause()
++    # await scroll_page(page, False)
++    # await random_pause()
++    # await scroll_page(page, False)
++    try:
++        if ostype == 'PC':
++            print("xufuhaixufuhai")
++            await random_pause()
++            #await page.wait_for_selector('div.RegistrationForm__buttonContainer__Ey9jH', state='visible')
++            await page.wait_for_selector('button.sso.lt_button_next.sso-button-email')
++            await random_click_element(page, 'button.sso.lt_button_next.sso-button-email')
++            #await page.click('button[data-id="Create Free Account"]')
++            print("xufuhaixufuhai1")
++            await random_pause()
++            #await random_click_element(page, 'a.bt30.bt30_green.bc_uppercase.join_btn')
++            #await random_pause()
++            #await random_click_element(page, 'a.bt30.bt30_green.bc_uppercase.join_btn')
++            #print("xufuhaixufuhai2")
++        else:
++            print("xufuhaixufuhai")
++            await random_pause()
++            #await page.wait_for_selector('div.RegistrationForm__buttonContainer__Ey9jH', state='visible')
++            await page.wait_for_selector('button.sso.lt_button_next.sso-button-email')
++            await random_click_element(page, 'button.sso.lt_button_next.sso-button-email')
++            #await page.click('button[data-id="Create Free Account"]')
++            print("xufuhaixufuhai1")
++            await random_pause()
++            #await random_click_element(page, 'a.join-btn.ui-btn.ui-btn-up-f.ui-shadow.ui-btn-corner-all')
++            #await random_pause()
++            #await random_click_element(page, 'a.join-btn.ui-btn.ui-btn-up-f.ui-shadow.ui-btn-corner-all')
++            #print("xufuhaixufuhai2")
++
++    except Exception:
++        print("Button not found or not visible. Skipping click.")
++
++    await random_pause()
++    # 等待并点击 "NEXT" 按钮
++    # await page.wait_for_selector('button[type="submit"]', timeout=150000)
++    # 等待并填充电子邮件输入字段
++    print("xufuhaixufuhai3")
++    selectors = [
++         'button.button.female.noaccent',
++         'button.button.male'
++    ]
++    gendor = random.choice(selectors)
++    await random_click_element(page, gendor)
++    print('fsaffdsf')
++    await random_pause()
++    #await page.hover('button[data-i18n="landing2-button-yes"]')
++    #await page.click('button[data-i18n="landing2-button-yes"]')
++    selectors = [
++        'button[data-i18n="landing2-button-no"]',
++        'button[data-i18n="landing2-button-yes"]'
++    ]
++    yesorno = random.choice(selectors)
++    await page.evaluate("(selector) => document.querySelector(selector).click()", yesorno)
++
++    #await random_click_element(page, 'button[data-i18n="landing2-button-no"]')
++    #await page.click('button[data-i18n="landing2-button-no"]')
++    #await page.click('button[data-next=""]')
++    await random_pause()
++    #await random_pause()
++    #await page.hover('button[data-i18n="landing2-button-yes"]')
++    #await page.click('button[data-i18n="landing2-button-yes"]')
++    selectors = [
++        'button[data-i18n="landing2-button-no"]',
++        'button[data-i18n="landing2-button-yes"]'
++    ]
++    yesorno = random.choice(selectors)
++    await page.evaluate("(selector) => document.querySelector(selector).click()", yesorno)
++    #await page.click('button[data-i18n="landing2-button-yes"]')
++    #await random_click_element(page, 'button[data-i18n="landing2-button-no"]')
++    #await page.click('button[data-next=""]')
++    await random_pause()
++    print('xufuhaixufuhai')
++    await page.wait_for_selector('input[data-field="city"]', timeout=150000)
++    # 逐个字符输入
++    for char in city[:4]:
++        await page.type('input[data-field="city"]', char)
++        await page.wait_for_timeout(100)  # 模拟每个字符之间的延迟
++    # await page.fill('input[data-field="city"]', city)
++    # await random_pause()
++    # await page.fill('input[data-field="city"]', city[:4])
++    # await random_pause()
++    # await page.fill('input[data-field="city"]', city[:2])
++    await page.wait_for_selector('#location-suggest li')
++    cities = await page.query_selector_all('#location-suggest li')
++    random_city = random.choice(cities)
++    await random_city.click()
++    await random_pause()
++    #await random_click_element(page, 'button.lt_button_next')
++    await page.evaluate("document.querySelector('button.lt_button_next').click()")
++
++    await page.wait_for_selector('input#lt_input_username', timeout=150000)
++    #num_arrays = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
++    #usernum = random.choice(num_arrays)
++    #await page.fill('input#lt_input_username', username)
++    for char in username:
++        await page.type('input#lt_input_username', char)
++        await page.wait_for_timeout(100)  # 模拟每个字符之间的延迟
++    # await page.wait_for_selector('input#user_member_username, input#log_in_username, input[name="log_in[username]"], input[name="user_member[username]"]', timeout=150000)
++    # await page.fill('input#user_member_username, input#log_in_username, input[name="log_in[username]"], input[name="user_member[username]"]', username)
++    await random_pause()
++    #await random_click_element(page, 'button.lt_button_next')
++    await page.evaluate("document.querySelector('button.lt_button_next').click()")
++
++    #await random_click_element(page, 'button.bt30.bt30_green.next')
++    #await random_pause()
++
++    # await page.wait_for_selector('input#registration-email', timeout=150000)
++    # await page.fill('input#registration-email', email)
++    # await random_pause()
++    # await random_click_element(page, 'button.lt_button_next')
++
++
++    # await page.wait_for_selector('input[id="user_member_email"]', timeout=150000)
++    # await page.fill('input[id="user_member_email"]', email.split('_needcheck')[0])
++    # await random_pause()
++    # await page.wait_for_selector('input#user_member_password, input#log_in_password, input[name="log_in[password]"], input[name="user_member[password]"]', timeout=150000)
++    # await page.fill('input#user_member_password, input#log_in_password, input[name="log_in[password]"], input[name="user_member[password]"]', password)
++    await page.wait_for_selector('input#lt_input_password', timeout=150000)
++    #await page.fill('input#lt_input_password', password)
++    for char in password:
++        await page.type('input#lt_input_password', char)
++        await page.wait_for_timeout(100)  # 模拟每个字符之间的延迟
++    await random_pause()
++    #await random_click_element(page, 'button.lt_button_next')
++    await page.evaluate("document.querySelector('button.lt_button_next').click()")
++
++    #选日
++    await page.wait_for_selector('#lt_select_dateday')
++    options = await page.query_selector_all('#lt_select_dateday option')
++    available_options = [option for option in options if await option.get_attribute('value')]
++    random_option = random.choice(available_options)
++    value = await random_option.get_attribute('value')
++    await page.select_option('#lt_select_dateday', value)
++    await random_pause()
++
++    #选月
++    await page.wait_for_selector('#lt_select_datemonth')
++    options = await page.query_selector_all('#lt_select_datemonth option')
++    available_options = [option for option in options if await option.get_attribute('value')]
++    random_option = random.choice(available_options)
++    value = await random_option.get_attribute('value')
++    await page.select_option('#lt_select_datemonth', value)
++    await random_pause()
++
++    #选年
++    await page.wait_for_selector('#lt_select_dateyear')
++    options = await page.query_selector_all('#lt_select_dateyear option')
++    available_options = [option for option in options if await option.get_attribute('value')]
++    random_option = random.choice(available_options)
++    value = await random_option.get_attribute('value')
++    await page.select_option('#lt_select_dateyear', value)
++    await random_pause()
++    #await random_click_element(page, 'button.lt_button_next')
++    await page.evaluate("document.querySelector('button.lt_button_next').click()")
++
++
++    await page.wait_for_selector('input#lt_input_email', timeout=150000)
++    await page.fill('input#lt_input_email', email)
++    await random_pause()
++    #await random_click_element(page, 'button.lt_button_next')
++    await page.evaluate("document.querySelector('button.lt_button_next').click()")
++    # 确保复选框元素可见
++    # await page.wait_for_selector('span.ui-icon.ui-icon-checkbox-off.ui-icon-shadow', state='visible')
++
++    # 选中复选框
++    # is_checked = await page.evaluate('document.querySelector("#user_member_terms_of_use").checked')
++    # if not is_checked:
++
++    # 确保复选框元素可见
++    # await random_click_element(page, 'span.ui-icon.ui-icon-checkbox-off.ui-icon-shadow')
++    await random_click_element(page, 'input.cc-tickbox-input')
++    #await page.check('input#registration-consent-checkbox')
++    await random_pause()
++    await random_click_element(page, 'input.cc-tickbox-input')
++    await random_pause()
++    #await random_click_element(page, 'input#registration-terms-consent-checkbox')
++    #await page.check('input#registration-terms-consent-checkbox')
++    #await random_pause()
++    await random_click_element(page, 'button#lt_button_confirm')
++    # await random_click_element(page, 'button.bt30.bt30_green.bt_green_solid')
++    await random_pause()
++    await random_click_element(page, 'button#lt_button_confirm')
++    await random_pause()
++    # await random_click_element(page, 'button[type="submit"]')
++    #await random_click_element(page, 'button.bt30.bt30_green.bt_green_solid')
++    #await random_pause()
++    await random_click_element(page, 'button[type="submit"]')
++    #await random_click_element(page, 'button.bt30.bt30_green.bt_green_solid')
++    await random_pause()
++    await random_click_element(page, 'button[type="submit"]')
++    await random_pause()
++    #print('xufuhai ready recaptcha')
++    #await random_click_element(page, 'span#recaptcha-anchor')
++    #await random_click_element(page, 'button.join_submit.bt30.bt30_green')
++    time.sleep(15)
++    # await random_click_element(page, 'button[type="submit"]')
++
++    # await random_click(page)
++    # await random_pause()
++    # await page.goto('https://royalcams.com/', timeout=150000)
++    # await random_pause()
++    # await random_click_element(page, 'button.buytokens_tablet')
++    # await random_pause()
++    # await random_click(page)
++    # await random_pause()
++
++    #await page.wait_for_selector('input[name="email"]', timeout=150000)
++    #await page.fill('input[name="email"]', email.split('_needcheck')[0])
++
++    try:
++        # 确保<span>元素可见
++        # await page.wait_for_selector('span.vpe_fit_text.js-fit_text', state='visible')
++        # await random_pause()
++        # await random_click_element(page, 'span.vpe_close')
++        # await random_pause()
++        # await random_click_element(page, 'a.bc_btn.bc_btn_green.hcb_btn')
++        # await random_pause()
++        # await random_click_element(page, 'button.bc_btn.bc_btn_green.hcb_btn')
++        # await random_pause()
++        # await random_click_element(page, 'button.join_submit.bt30.bt30_green')
++        # await random_pause()
++        # await random_click_element(page, 'button[type="submit"]')
++        # await random_pause()
++        # await random_click_element(page, 'span.vpe_fit_text.js-fit_text')
++        # await random_pause()
++        # await random_click_element(page, 'span.vpe_close')
++        await random_pause()
++        #print('xufuhai ready close verifyemaisent')
++        #await random_click_element(page, 'button#jtymt23l_VerifyEmailSent_closeBtn')
++        print('ready to check activation_link')
++        time.sleep(30)
++
++        if 'gmail' not in email:
++            email_passwd = get_email_passwd_with_email(email)
++            activate_link = check_email_for_activation_link(email, email_passwd, offer)
++            print('activate_link:', activate_link)
++            if activate_link == 'nothing':
++                closeBrowser(browser_id)
++                deleteBrowser(browser_id)
++                return 0
++            await random_pause()
++            await page.goto(activate_link[0], timeout=150000)
++        else:
++            # email_passwd = get_email_passwd_with_email(email)
++            # email_recoveryemail = get_email_passwd_with_recoveryemail(email)
++            # activate_link = await check_gmail_for_activation_link(email, email_passwd, email_recoveryemail, page)
++            # await page.goto(activate_link, timeout=150000)
++            closeBrowser(browser_id)
++            return 1
++
++        # await random_pause()
++        # selectors = [
++        #     'a[href="/all"]',
++        #     'a[href="/male"]',
++        #     'a[href="/female"]',
++        #     'a[href="/transgender"]'
++        # ]
++        # gendor = random.choice(selectors)
++        # await random_click_element(page, gendor)
++        # await random_pause()
++        # await wait_for_element_whether_exists(page, '[data-ta-locator="CustomLink-FlatButton-startBrowsing-link"]')
++        time.sleep(30)
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'label.cc-radio-label-confirm')
++        await random_pause()
++        await random_click_element(page, 'div.button.button-allow')
++        await random_pause()
++
++
++        random_nums_array = [6, 8, 10, 12, 14, 16, 18, 20]
++        random_num = random.choice(random_nums_array)
++        print('action random_num:', random_num)
++        # 随机点击、随机暂停、返回、滚动
++        for _ in range(random_num):  # 进行10次操作，你可以根据需要调整次数
++            await random_click(page)
++            await random_pause()
++            await random_click(page)
++            await random_pause()
++            if ostype == 'PC':
++                await scroll_page(page, False)
++            else:
++                await scroll_page(page, True)
++            await random_pause()
++            await random_click(page)
++            await random_pause()
++            await random_click(page)
++            await random_pause()
++            if random.random() < 0.4:
++                print("Going back and pausing...")
++                await page.go_back()
++                await random_pause()
++                # await page.goto('https://royalcams.com/', timeout=150000)
++                # await random_pause()
++            else:
++                print("Skipping the go_back and pause actions.")
++            # await page.go_back()
++            # await random_pause()
++            if ostype == 'PC':
++                await scroll_page(page, False)
++            else:
++                await scroll_page(page, True)
++
++        handle_captcha(page)
++
++        time.sleep(20)
++
++        print('clsoe page and browser')
++        await page.close()
++
++        time.sleep(2)
++        closeBrowser(browser_id)
++        deleteBrowser(browser_id)
++        return 1
++    except Exception:
++        traceback.print_exc()
++        deleteBrowser(browser_id)
++        return 1
++  except Exception:
++    traceback.print_exc()
++    deleteBrowser(browser_id)
++    return 0
++
++async def bit_launch(email, username, password, url, ostype, city, offer):
++    async with async_playwright() as playwright:
++      result = await run(playwright, email, username, password, url, ostype, city, offer)
++      return result
++
++@app.task
++def register_user_task(url, email, password, proxy_ip, user_agent, country, city, username, ostype):
++    print('xufuhai')
++    result = asyncio.run(bit_launch(email, username, password, url, ostype, city, 'FlirteJetzt'))
++    if result == 1:
++        insert_registration_task(url, email, password, proxy_ip, user_agent, country, city, 'FlirteJetzt')
++    
++
++def close_advertisements(page):
++    try:
++        page.click('button[class="ad-close"]')
++    except:
++        pass
++
++def answer_basic_questions(page):
++    page.click('button[name="yes_no_1"]')
++    page.click('button[name="yes_no_2"]')
++
++def handle_captcha(page):
++    pass
++
++
++browser_id, ip, country, city, postal, ostype = createBrowser(False, '', 'FlirteJetzt')
++detailes = detailBrowser(browser_id)
++#url='https://specdeviceinfo.com/im/click.php?c=2&key=d0kl6o36g3dds3e348ww6ei0'
++#url='https://t.ajrkm3.com/334905/8865/33288?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
++#url='https://t.ajrkm.link/340062/2994/19129?bo=2779,2778,2777,2776,2775&po=6533&aff_sub5=SF_006OG000004lmDN'
++#url='https://t.antj.link/340059/9388/35674?bo=2753,2754,2755,2756&po=6456&aff_sub5=SF_006OG000004lmDN'
++url='https://t.antj.link/340059/9388/35674?bo=2753,2754,2755,2756&po=6456&aff_sub5=SF_006OG000004lmDN'
++#url=sys.argv[1]
++print(url)
++username=generate_username()
++#url='https://sweetydating.online/im/click.php?c=17&key=8ql18onn77ez91a7128cz2ga'
++email = get_random_email_with_status_zero('5')
++passwd=generate_password()
++#ip=detailes['data']['lastIp']
++user_agent=detailes['data']['browserFingerPrint']['userAgent']
++#country=''
++#city=''
++print(email, user_agent, passwd, ip, country, city, postal, username)
++register_user_task(url, email, passwd, ip, user_agent, country, city, username, ostype)
+-- 
+2.39.3 (Apple Git-146)
+
