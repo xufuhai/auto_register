@@ -7,6 +7,26 @@ from email.parser import BytesParser
 from email.policy import default
 from bs4 import BeautifulSoup
 import time
+import logging
+
+def list_folders(username, password):
+    try:
+        # 连接到 IMAP 服务器并登录
+        mail = imaplib.IMAP4_SSL("outlook.office365.com")
+        mail.login(username, password)
+
+        # 列出所有文件夹
+        status, folders = mail.list()
+        if status == "OK":
+            for folder in folders:
+                print(folder.decode())
+        else:
+            logging.error(f"无法列出文件夹: {status}")
+
+        mail.logout()
+    except Exception as e:
+        logging.error(f"连接或登录失败: {e}")
+
 
 async def extract_confirmation_url(page):
     # 查找包含特定 URL 的第一个链接
@@ -66,7 +86,7 @@ async def check_gmail_for_activation_link(email_user, email_password, revovery_e
     return activate_link
 
 # POP3 检查函数
-def check_email_pop3(email_user, email_password):
+def check_email_pop3(email_user, email_password, offer=''):
     pop3_url = 'pop.outlook.com'  # POP3 服务器地址，适用于 Outlook 和 Hotmail
     pop3 = poplib.POP3_SSL(pop3_url)
 
@@ -135,28 +155,34 @@ def check_email_pop3(email_user, email_password):
     else:
         print('xufuhai2')
         if return_link:
-            relevant_links.append(return_link[1])
+            if offer == 'FlirteJetzt':
+                relevant_links.append(return_link[2])
+            else:
+                relevant_links.append(return_link[1])
             return relevant_links
         else:
             return relevant_links
         #return return_link[1]
 
 # IMAP 检查函数
-def check_email_imap(email_user, email_password):
-    imap_url = 'imap-mail.outlook.com'  # IMAP 服务器地址，适用于 Outlook 和 Hotmail
+def check_email_imap(email_user, email_password, offer=''):
+    #imap_url = 'imap-mail.outlook.com'  # IMAP 服务器地址，适用于 Outlook 和 Hotmail
+    imap_url = 'outlook.office365.com'
     mail = imaplib.IMAP4_SSL(imap_url)
 
     printed_links = set()
     relevant_links = []
+    return_link = []
 
     try:
         # 登录邮箱
         mail.login(email_user, email_password)
 
         # 遍历收件箱和垃圾邮箱
-        folders_to_check = ['INBOX', 'Junk']  # 'Junk' 可能是垃圾邮件的文件夹名称，视服务商而定
+        folders_to_check = ['Junk', 'Inbox']  # 'Junk' 可能是垃圾邮件的文件夹名称，视服务商而定
 
         for folder in folders_to_check:
+            print(folder)
             mail.select(folder)
 
             # 搜索所有邮件
@@ -192,10 +218,13 @@ def check_email_imap(email_user, email_password):
                             links = soup.find_all('a')
                             for link in links:
                                 href = link.get('href')
+                                return_link.append(href)
+                                print(href)
                                 if href and is_relevant_link(href) and href not in printed_links:
                                     relevant_links.append(href)
                                     printed_links.add(href)
                 else:
+                    print('xufuhai')
                     content_type = msg.get_content_type()
                     if content_type == 'text/html':
                         html_content = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
@@ -203,32 +232,58 @@ def check_email_imap(email_user, email_password):
                         links = soup.find_all('a')
                         for link in links:
                             href = link.get('href')
+                            return_link.append(href)
                             if href and is_relevant_link(href) and href not in printed_links:
                                 relevant_links.append(href)
                                 printed_links.add(href)
 
     except imaplib.IMAP4.error as e:
         print(f"IMAP error: {e}")
+        return 'error'
 
     finally:
         # 关闭连接
         mail.logout()
 
-    return relevant_links
+    print('return_link:', return_link)
+    print('relevant_links:', relevant_links)
+    if relevant_links:
+        print('xufuhai1')
+        return relevant_links
+    elif return_link:
+        print('xufuhai2')
+        if offer == 'FlirteJetzt':
+            relevant_links.append(return_link[2])
+        else:
+            relevant_links.append(return_link[1])
+        return relevant_links
+    else:
+        return relevant_links
 
 # 主函数：优先尝试 POP3，然后再尝试 IMAP
-def check_email_for_activation_link(email_user, email_password):
+def check_email_for_activation_link(email_user, email_password, offer=''):
     # 先尝试使用 POP3
-    relevant_links = check_email_pop3(email_user, email_password)
+    relevant_links = check_email_pop3(email_user, email_password, offer)
     # 如果 POP3 没有找到链接或没有邮件，改用 IMAP
     if not relevant_links:
         print("No links found with POP3, trying IMAP...")
-        relevant_links = check_email_imap(email_user, email_password)
+        relevant_links = check_email_imap(email_user, email_password, offer)
 
     if not relevant_links:
         print("No activation links found.")
         return 'nothing'
-
+    elif relevant_links == 'error':
+        relevant_links = check_email_imap(email_user, email_password, offer)
+        if not relevant_links:
+            print("No activation links found.")
+            return 'nothing'
+        elif relevant_links == 'error':
+            relevant_links = check_email_imap(email_user, email_password, offer)
+            if not relevant_links:
+                print("No activation links found.")
+                return 'nothing'
+            elif relevant_links == 'error':
+                return 'nothing'
     return relevant_links
 
 
@@ -295,7 +350,7 @@ def check_email_for_activation_link(email_user, email_password):
 #      return relevant_links
 
 def is_relevant_link(href):
-    keywords = ['signup', 'confirm', 'email']
+    keywords = ['signup', 'confirm', 'email', 'activate']
     #keywords = ['cam']
     return any(keyword in href for keyword in keywords)
 

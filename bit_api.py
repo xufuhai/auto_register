@@ -257,7 +257,8 @@ def createBrowser(stay, country_in, offername):  # 创建或者更新窗口，�
     #port = json_data['port']
     # 代理服务器的地址和认证信息
     #proxy = f'socks5h://{proxyUserName}:{proxyPassword}@{host}:{port}'
-    proxy = f'http://165.154.20.60:5000/get_ip_info?location={selected_country_code}&session={random_string}'
+    #proxy = f'http://165.154.20.60:5000/get_ip_info?location={selected_country_code}&session={random_string}'
+    proxy = f'http://8.219.49.227:5000/get_ip_info?location={selected_country_code}&session={random_string}'
 
 
     # 目标 URL

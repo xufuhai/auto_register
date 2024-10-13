@@ -89,5 +89,6 @@ from email_utils import *
 #     # 只选择包含 "signup"、"confirm" 或 "email" 的链接，且链接较长
 #     return any(keyword in url for keyword in ['signup', 'confirm', 'email']) and len(url) > 50
 
-link = check_email_for_activation_link('tzbci5752wob@outlook.com', 'BLL3ezJBiO')
+link = check_email_for_activation_link('whahj3806cbd@outlook.com', 'JR7mLvkSQo')
+#list_folders('whahj3806cbd@outlook.com', 'JR7mLvkSQo')
 print(link[0])
