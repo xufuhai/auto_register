@@ -31,6 +31,7 @@ async def get_clickable_and_focusable_elements(page):
 
 async def random_click_element(page, selector):
     try:
+        #await page.wait_for_selector(selector, timeout=5000, state='visible')
         # 获取元素
         element = await page.query_selector(selector)
         print('xufuhai random_click_element:', element)

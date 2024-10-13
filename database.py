@@ -33,6 +33,12 @@ def insert_registration_task(url, email, password, proxy_ip, user_agent, country
         values_update = ('1', email)
     elif offer == 'royalcams':
         values_update = ('2', email)
+    elif offer == 'bongacams':
+        values_update = ('3', email)
+    elif offer == 'cam4':
+        values_update = ('4', email)
+    elif offer == 'FlirteJetzt':
+        values_update = ('5', email)
     cursor.execute(query_update, values_update)
     conn.commit()
     print("Record updated in buy_email successfully")
